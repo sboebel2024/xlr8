@@ -1,0 +1,22 @@
+import os
+
+class Config:
+    """Base configuration."""
+    SECRET_KEY = os.environ.get('SECRET_KEY') or 'your_secret_key'
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///app.db'
+    SQLALCHEMY_TRACK_MODIFICATIONS = False  # Disable Flask-SQLAlchemy's event system
+
+class DevelopmentConfig(Config):
+    """Development configuration."""
+    DEBUG = True
+
+class TestingConfig(Config):
+    """Testing configuration."""
+    TESTING = True
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///test.db'
+
+class ProductionConfig(Config):
+    """Production configuration."""
+    DEBUG = False
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
+    
