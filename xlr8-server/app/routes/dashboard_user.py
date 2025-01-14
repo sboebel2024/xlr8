@@ -541,7 +541,6 @@ def sync_server_to_client():
     user = User.query.get(user_id)
     if not user:
         return jsonify({"status": "NOK", "message": "User not found"}), 404
-    
 
     response = requests.get(
         f"{CLIENT_URL}/send-paths-by-extension",
