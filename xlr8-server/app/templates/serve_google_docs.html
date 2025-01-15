@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>xlr8 ~ desmos</title>
+    <script src="https://apis.google.com/js/api.js"></script>
+</head>
+
+<body>
+    <main>
+        <div id = "header">
+        </div>
+        <div id="api_container">
+        </div>
+    </main>
+    <script id="content-data" type="application/json">
+        {{ content | tojson | safe }}
+    </script>
+    <script id="file-id" type="application/json">
+        {{ fileid | safe }}
+    </script>
+    <script id="api-key" type="application/json">
+        {{ apikey | safe }}
+    </script>
+
+    <!-- Make sure to secure the API key before production!! -->
+
+    
+    <script src="{{ url_for('static', filename='js/serve_google_docs.js') }}" defer></script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>xlr8 ~ desmos</title>
+    <script src="https://www.desmos.com/api/v1.7/calculator.js?apiKey=dcb31709b452b1cf9dc26972add0fda6"></script>
+</head>
+
+<body>
+    <main>
+        <div id = "header">
+        </div>
+        <div id="api_container">
+        </div>
+    </main>
+    <script id="content-data" type="application/json">
+        {{ content | tojson | safe }}
+    </script>
+    <script id="file-id" type="application/json">
+        {{ fileid | safe }}
+    </script>
+    
+    <script src="{{ url_for('static', filename='js/serve_desmos_script.js') }}" defer></script>
+</body>
+</html>

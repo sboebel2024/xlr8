@@ -3,7 +3,6 @@ from app.models import *
 from app import db
 import requests
 
-
 CLIENT_URL = "http://143.215.90.147:8080"
 
 user_dashboard_bp = Blueprint('user_dashboard', __name__)
@@ -21,9 +20,17 @@ def generate_unique_path(path):
         new_path = f"{base}({counter}).{ext}" if ext else f"{base}({counter})"
     return new_path
 
+
+# THIS IS A PROTOTYPE ROUTE TO TEST THE **DESMOS** STUFF!!!
+# REPLACE WITH A ROUTE THAT LOOKS UP WHAT HTML FILE TO SERVE,
+# AND THEN SERVES IT. 
 @user_dashboard_bp.route('/render-site', methods=['GET', 'POST'])
 def render_site():
     return render_template('user_dashboard.html')
+
+@user_dashboard_bp.route('/debug', methods=['GET'])
+def debug():
+    return "Debug route is working!"
 
 
 @user_dashboard_bp.route('/get-file-data', methods=['GET', 'POST'])
@@ -110,8 +117,8 @@ def get_child_directories():
     }), 200
 
 
-@user_dashboard_bp.route('/access-file', methods=['GET', 'POST'])
-def access_file(file_id):
+@user_dashboard_bp.route('/access-file', methods=['GET'])
+def access_file():
     """
     Route that runs whenever one tries to access a file.
 
@@ -121,9 +128,9 @@ def access_file(file_id):
     Returns:
         json := access status
     """
-    data = request.get_json()
-    file_id = data['file_id']
+    file_id = request.args.get('file_id')
     user_id = session.get('user_id')  # Get the current user's ID from the session
+    user_id = 1
     if not user_id:
         return jsonify({"status": "NOK", "message": "User not logged in"}), 401
 
@@ -135,7 +142,19 @@ def access_file(file_id):
     db.session.add(access_log)
     db.session.commit()
 
-    return jsonify({"status": "OK", "message": "File access logged"}), 200
+    if file.ext in ext_lookup_json:
+        template_to_run = ext_lookup_json[file.ext]
+        content=file.content
+        print(content)
+        return render_template(template_to_run, content=content, fileid = file_id)
+
+
+
+    return jsonify({
+        "status": "NOK", 
+        "message": "File access logged, but file extension does not exist in the manual lookup table.",
+        "ext": ext_lookup_json[f"{file.ext}"]
+    }), 200
 
 @user_dashboard_bp.route('/edit-file-content', methods=['GET', 'POST'])
 def edit_file():
@@ -157,6 +176,7 @@ def edit_file():
         return jsonify({"status": "NOK", "message": "Missing required fields: 'fileName', or 'content'"}), 400
     
     user_id = session.get('user_id')
+    user_id = 1
     if not user_id:
         return jsonify({"status": "NOK", "message": "User not authenticated"}), 401
 
@@ -205,7 +225,7 @@ def edit_file():
             "id": file.id,
             "name": file.fileName,
             "extension": file.ext,
-            "owner": file.owning_user.username
+            "owner": file.owning_user.username,
         }
     }), 200
 
@@ -220,6 +240,7 @@ def create_file():
         Any := content
 
     """
+
     data = request.get_json()
     
     # Validate input
@@ -227,6 +248,8 @@ def create_file():
         return jsonify({"status": "NOK", "message": "Missing required fields: 'fileName'"}), 400
     
     user_id = session.get('user_id')  # Get the logged-in user's ID from the session
+    # # TEMP
+    # user_id = 1
     if not user_id:
         return jsonify({"status": "NOK", "message": "User not authenticated"}), 401
 
@@ -243,7 +266,9 @@ def create_file():
     if not user:
         return jsonify({"status": "NOK", "message": "User not found"}), 404
     
-    file = File(fileName=file_name, owning_user=user, ext=ext, content=content)
+    # return({"data":f"fileName: {file_name}, ext: {ext}, content: {content}, owning_user_id: {user_id}"})
+    
+    file = File(fileName=file_name, owning_user_id=user_id, ext=ext, content=content)
 
     # Assign additional attributes
     if image:
@@ -272,6 +297,11 @@ def create_file():
             "owner": file.owning_user.username
         }
     }), 201
+
+@user_dashboard_bp.route('/set-test-session')
+def set_test_session():
+    session['user_id'] = 1  # Set user_id for testing
+    return "Test session set!"
  
 
 @user_dashboard_bp.route('create-multiple-files', methods=['GET', 'POST'])
@@ -328,7 +358,7 @@ def create_multiple_files():
             content = file['content']
             ext = file['ext']
 
-            newFile = File(fileName=file_name, owning_user=user, ext=ext, content=content)
+            newFile = File(fileName=file_name, owning_user_id=user_id, ext=ext, content=content)
 
             file.users.append(user)
 
