@@ -249,7 +249,7 @@ def create_file():
     
     user_id = session.get('user_id')  # Get the logged-in user's ID from the session
     # # TEMP
-    # user_id = 1
+    user_id = 1
     if not user_id:
         return jsonify({"status": "NOK", "message": "User not authenticated"}), 401
 

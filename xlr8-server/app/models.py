@@ -103,5 +103,5 @@ class FileAccessLog(db.Model):
 
 ext_lookup_json = {
     "des": "serve_desmos.html",
-    "docx": "serve_google_docs.html"
+    "docx": "test_google.html"
 }

@@ -3,22 +3,29 @@ const clientId = "261551392822-lahsvlhlui2u2f6qb6dkif7qteronilq.apps.googleuserc
 
 
 function initGoogleAPI() {
-    gapi.load('client:auth2', () => {
-        gapi.client.init({
-            apiKey: apiKey, // Replace with your API key
-            clientId: clientId, // Replace with your Client ID
-            scope: 'https://www.googleapis.com/auth/documents https://www.googleapis.com/auth/drive.file'
-        }).then(() => {
-            const authInstance = gapi.auth2.getAuthInstance();
-            document.getElementById('authButton').onclick = () => {
-                authInstance.signIn().then(() => {
-                    document.getElementById('createDocButton').disabled = false;
-                });
-            };
-        }).catch((error) => {
-            console.error('Error initializing Google API:', error);
-        });
+    if (typeof google === 'undefined' || typeof google.accounts === 'undefined') {
+        setTimeout(initGoogleAPI, 50); // Retry after 50ms
+        return;
+    }
+
+
+    google.accounts.id.initialize({
+        client_id: clientId, // Your Client ID
+        callback: handleCredentialResponse
     });
+
+    console.log("Initialized!")
+
+    // Render the "Sign In" button
+    google.accounts.id.renderButton(
+        document.getElementById('authButton'), // The element where the button appears
+        { theme: 'outline', size: 'large' }
+    );
+}
+
+function handleCredentialResponse(response) {
+    console.log('Encoded JWT ID token:', response.credential);
+    // Use the response to authenticate with your backend if needed
 }
 
 function createDocument() {
