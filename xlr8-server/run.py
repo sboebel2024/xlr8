@@ -7,17 +7,17 @@ import secrets
 
 app = create_app(config.TestingConfig)
 
-@app.before_request
-def add_nonce():
-    g.nonce = secrets.token_hex(16)  # Generate a unique nonce for each request
+# @app.before_request
+# def add_nonce():
+#     g.nonce = secrets.token_hex(16)  # Generate a unique nonce for each request
 
-@app.after_request
-def apply_csp(response):
-    response.headers['Content-Security-Policy'] = (
-        f"script-src 'self' https://accounts.google.com https://apis.google.com https://www.gstatic.com 'nonce-{g.nonce}'; "
-        "object-src 'none';"
-    )
-    return response
+# @app.after_request
+# def apply_csp(response):
+#     response.headers['Content-Security-Policy'] = (
+#         f"script-src 'self' https://accounts.google.com https://apis.google.com https://www.gstatic.com 'nonce-{g.nonce}'; "
+#         "object-src 'none';"
+#     )
+#     return response
 
 
 if __name__ == '__main__':
