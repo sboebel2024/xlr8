@@ -25,41 +25,38 @@ class API {
     }
 }
 
-// Get content and script for every file
-const contentScript = document.getElementById('content-data');
-const content = JSON.parse(contentScript.textContent);
-const fileId = parseInt(document.getElementById("file-id").textContent, 10);
+async function changeFilename(newName) {
+    try {
+        const sanitizedFileName = newName.replace(/[^a-zA-Z0-9_]/g, '');
+        const newFileName = `${sanitizedFileName}.des`;
 
-// Set the API container's styles.
-const api_container = document.getElementById('api_container');
-api_container.style.width = '100vw';
-api_container.style.height = '95vh';
+        const payload = {
+            file_id: fileId,
+            newFileName: newFileName
+        };
 
-// -------------------------------- ONLY CHANGE THESE LINES ----------------------------------
+        const response = await fetch('/user-dashboard/edit-file-content', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
+        });
 
-api_instance = new API(Desmos.GraphingCalculator(document.getElementById('api_container')), 'setState', 'getState');
+        const result = await response.json();
 
+        if (response.ok) {
+            console.log('File edited successfully:', result);
+        } else {
+            console.error('Error editing file:', result.message);
+        }
 
-
-// -------------------------------------------------------------------------------------------
-
-// Set state
-api_instance.setState(content);
-
-// Set header stuff. Change this so it looks better for production!
-const header = document.getElementById('header');
-header.style.height = '5vh';
-header.style.width = '100vh';
-
-// Create the save button and equip it with the editFileContent method.
-// Also, append it to the header for easy development access.
-const saveButton = document.createElement('button');
-saveButton.textContent = 'Save';
-saveButton.onclick = () => editFileContent(fileId, JSON.stringify(api_instance.getState()));
-header.appendChild(saveButton);
-
-
-
+        return result;
+    } catch (error) {
+        console.error('An unexpected error occurred:', error);
+        return { status: 'NOK', message: 'An unexpected error occurred' };
+    }
+}
 
 // Post route to handle talking to server
 async function editFileContent(fileId, newContent, newFileName = null, newOwnerId = null) {
@@ -108,3 +105,48 @@ async function editFileContent(fileId, newContent, newFileName = null, newOwnerI
     }
 }
 
+// Get content and script for every file
+const contentScript = document.getElementById('content-data');
+const content = JSON.parse(contentScript.textContent);
+const fileId = parseInt(document.getElementById("file-id").textContent, 10);
+
+// Set the API container's styles.
+const api_container = document.getElementById('api_container');
+api_container.style.width = '100vw';
+api_container.style.height = '95vh';
+
+// -------------------------------- ONLY CHANGE THESE LINES ----------------------------------
+
+api_instance = new API(Desmos.GraphingCalculator(document.getElementById('api_container')), 'setState', 'getState');
+
+
+
+// -------------------------------------------------------------------------------------------
+
+// Set state
+api_instance.setState(content);
+
+// Set header stuff. Change this so it looks better for production!
+const header = document.getElementById('header');
+header.style.height = '5vh';
+header.style.width = '100vh';
+
+// Create the save button and equip it with the editFileContent method.
+// Also, append it to the header for easy development access.
+const saveButton = document.createElement('button');
+saveButton.textContent = 'Save';
+saveButton.onclick = () => editFileContent(fileId, JSON.stringify(api_instance.getState()));
+header.appendChild(saveButton);
+
+const nameScript = document.getElementById('file-name');
+const fileName = JSON.parse(nameScript.textContent);
+const nameForm = document.createElement('input');
+nameForm.type = 'text';
+nameForm.value = fileName;
+header.appendChild(nameForm);
+
+nameForm.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+        changeFilename(nameForm.value);
+    }
+});

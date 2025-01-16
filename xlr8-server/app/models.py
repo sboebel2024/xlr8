@@ -68,7 +68,7 @@ class User(db.Model):
 
 # Temporary users
 class TempUser(db.Model):
-    __tablename__ = 'tempuser'
+    __tablename__ = 'tempusers'
     
     id = db.Column(db.Integer, primary_key=True)
     ip_addr = db.Column(db.String, nullable=False)
@@ -79,14 +79,14 @@ class File(db.Model):
     __tablename__ = 'files'
 
     id = db.Column(db.Integer, primary_key=True)
-    fileName = db.Column(db.String(50), nullable=False, unique=True)
+    fileName = db.Column(db.String(50), nullable=False)
     path = db.Column(db.String(255), nullable=True, unique=True)
     ext = db.Column(db.String(50), nullable=False)
     version = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc))
     created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc), nullable=False)
     content = db.Column(db.Text, nullable=False)
     
-    owning_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    owning_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     orgs = db.relationship('Org', secondary=file_orgs_table, back_populates='files')
     users = db.relationship('User', secondary=user_file_table, backref='files')
 
@@ -108,12 +108,14 @@ class FileAccessLog(db.Model):
     __tablename__ = 'file_access_logs'
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    temp_user_id = db.Column(db.Integer, db.ForeignKey('tempusers.id'), nullable=True)
     file_id = db.Column(db.Integer, db.ForeignKey('files.id'), nullable=False)
     accessed_at = db.Column(db.DateTime, default=datetime.now(timezone.utc), nullable=False)
 
     user = db.relationship('User', backref='file_access_logs')
     file = db.relationship('File', backref='file_access_logs')
+    temp_user = db.relationship('TempUser', backref='file_access_logs')
 
 ext_lookup_json = {
     "des": "serve_desmos.html",

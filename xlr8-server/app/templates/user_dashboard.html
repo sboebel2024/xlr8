@@ -6,7 +6,12 @@
     <title>User Dashboard</title>
 </head>
 <body>
-    <div id="main"></div>
+    <main>
+        <div id="main"></div>
+    </main>
+    <script id="user-name" type="application/json">
+        {{ userName | tojson | safe }}
+    </script>
     <script src="{{ url_for('static', filename='js/user_dashboard.js') }}" defer></script>
 </body>
 </html>

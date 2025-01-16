@@ -25,7 +25,18 @@ def generate_unique_path(path):
 # AND THEN SERVES IT. 
 @user_dashboard_bp.route('/', methods=['GET', 'POST'])
 def render_site():
-    return render_template('user_dashboard.html')
+    user_id = session.get('user_id')
+    if not user_id:
+        ip = request.remote_addr
+        tempUser = TempUser.query.filter(TempUser.ip_addr == ip).first()
+        if not tempUser:
+            tempUser = register_temp_user(ip)
+            print(f"Temp User ID: {tempUser.id}")
+            
+        return render_template('user_dashboard.html', userName = 'None')
+
+    user = User.query.get(user_id)
+    return render_template('user_dashboard.html', userName = f'{user.firstName} {user.lastName}')
 
 @user_dashboard_bp.route('/debug', methods=['GET'])
 def debug():
@@ -80,7 +91,7 @@ def get_file_data():
             return jsonify({
                 "status": "OK",
                 "recent_files": [
-                    {"id": file.id, "name": file.fileName, "owner": file.owning_user.firstName, "image": file.image}
+                    {"id": file.id, "name": file.fileName, "owner": f"{file.owning_user.firstName if file.owning_user_id is not None else None}", "image": file.image}
                     for file in recent_files
                 ]
             }), 200
@@ -139,7 +150,8 @@ def access_file():
         template_to_run = ext_lookup_json[file.ext]
         content=file.content
         print(content)
-        return render_template(template_to_run, content=content, fileid = file_id)
+        fileName = file.fileName.split('.')[0]
+        return render_template(template_to_run, content=content, fileid=file_id, filename=fileName )
 
     return jsonify({
         "status": "NOK", 
@@ -163,8 +175,8 @@ def edit_file():
     """
     data = request.get_json()
     
-    if not data or 'file_id' not in data or 'content' not in data:
-        return jsonify({"status": "NOK", "message": "Missing required fields: 'fileName', or 'content'"}), 400
+    if not data or 'file_id' not in data:
+        return jsonify({"status": "NOK", "message": "Missing required fields: 'file_id'"}), 400
     
     user_id = session.get('user_id')
     if not user_id:
@@ -220,7 +232,7 @@ def edit_file():
             "id": file.id,
             "name": file.fileName,
             "extension": file.ext,
-            "owner": file.owning_user.username,
+            "owner": file.owning_user.username if file.owning_user is not None else None,
         }
     }), 200
 
@@ -236,6 +248,8 @@ def create_file():
 
     """
 
+
+
     data = request.get_json()
     
     # Validate input
@@ -245,13 +259,10 @@ def create_file():
     user_id = session.get('user_id')  # Get the logged-in user's ID from the session
 
     if not user_id:
-        user_id = data.get('user_id') # for debugging
-        print(user_id)
-        if not user_id:
-            ip = request.remote_addr
-            tempUser = TempUser.query.filter(TempUser.ip_addr == ip).first()
-            if not tempUser:
-                register_temp_user(ip)
+        ip = request.remote_addr
+        tempUser = TempUser.query.filter(TempUser.ip_addr == ip).first()
+        if not tempUser:
+            register_temp_user(ip)
                 
 
     file_name = data['fileName']
@@ -262,20 +273,23 @@ def create_file():
         base, ext = file_name.rsplit('.', 1)
     except Exception as e:
         return jsonify({"status": "NOK", "message": f"Filename not formatted correctly: {e}"}), 400
-
-    user = User.query.get(user_id)
-    if not user:
-        return jsonify({"status": "NOK", "message": "User not signed in; cannot create file for unsigned user."}), 404
     
+    if user_id:
+        user = User.query.get(user_id)
+
     # return({"data":f"fileName: {file_name}, ext: {ext}, content: {content}, owning_user_id: {user_id}"})
     
-    file = File(fileName=file_name, owning_user_id=user_id, ext=ext, content=content)
+    file = File(fileName=file_name, ext=ext, content=content)
+
+    file.owning_user_id = user_id
 
     # Assign additional attributes
     if image:
         file.image = image
 
-    file.users.append(user)  # Assign the current user to the file
+    if user_id:
+        user = User.query.get(user_id)
+        file.users.append(user)  # Assign the current user to the file
 
     # Commit to the database
     try:
@@ -295,7 +309,6 @@ def create_file():
             "id": file.id,
             "name": file.fileName,
             "extension": file.ext,
-            "owner": file.owning_user.username
         }
     }), 201
 

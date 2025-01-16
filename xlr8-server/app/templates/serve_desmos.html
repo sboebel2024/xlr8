@@ -20,6 +20,10 @@
     <script id="file-id" type="application/json">
         {{ fileid | safe }}
     </script>
+    <script id="file-name" type="application/json">
+        {{ filename | tojson | safe }}
+    </script>
+    
     
     <script src="{{ url_for('static', filename='js/serve_desmos_script.js') }}" defer></script>
 </body>
