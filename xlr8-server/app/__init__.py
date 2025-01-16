@@ -10,6 +10,8 @@ def create_app(config_class='config.Config'):
 
     db.init_app(app)
 
+
+
     from app.routes.login_routes import login_bp
     from app.routes.signup_routes import signup_bp
     from app.routes.logout_routes import logout_bp

@@ -59,6 +59,8 @@ saveButton.onclick = () => editFileContent(fileId, JSON.stringify(api_instance.g
 header.appendChild(saveButton);
 
 
+
+
 // Post route to handle talking to server
 async function editFileContent(fileId, newContent, newFileName = null, newOwnerId = null) {
     const url = '/user-dashboard/edit-file-content';

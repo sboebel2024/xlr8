@@ -2,6 +2,12 @@ from app import db
 from datetime import datetime, timezone
 import os
 
+def register_temp_user(ip):
+        tempUser = TempUser(ip_addr=ip)
+        db.session.add(tempUser)
+        db.session.commit()
+        return tempUser
+
 # Association tables
 managed_users_table = db.Table(
     'managed_users',
@@ -59,6 +65,14 @@ class User(db.Model):
         secondary=user_org_table,
         back_populates='users'
     )
+
+# Temporary users
+class TempUser(db.Model):
+    __tablename__ = 'tempuser'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    ip_addr = db.Column(db.String, nullable=False)
+
 
 # File model
 class File(db.Model):
