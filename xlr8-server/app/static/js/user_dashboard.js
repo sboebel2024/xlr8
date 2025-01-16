@@ -33,7 +33,7 @@ async function createFile(type, fileName) {
                 content: ""
             };
 
-            const response = await fetch('http://localhost:5000/user-dashboard/create-file', {
+            const response = await fetch('/user-dashboard/create-file', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -47,6 +47,8 @@ async function createFile(type, fileName) {
 
             const data = await response.json();
 
+            updateFileList(isCards);
+
             if (data.status === "OK") {
                 console.log('File created successfully:', data.file);
                 return data.file; // Return the created file object
@@ -54,6 +56,7 @@ async function createFile(type, fileName) {
                 console.error('Error creating file:', data.message);
                 return null;
             }
+
 
         } catch (error) {
             console.error('Error creating file:', error);
@@ -76,7 +79,10 @@ function link_to_file(file_id) {
 
 function renderFileList(files) {
 
+    renderContainer.innerHTML = '';
+
     files.forEach(file => {
+    
         const listItem = document.createElement('div');
         listItem.classList.add("file-item");
 
@@ -117,6 +123,7 @@ async function updateFileList(isCards) {
         const data = await fetchFileData(isCards);
 
         // Render the updated file list
+
         renderFileList(data.recent_files);
     } catch (error) {
         console.error('Error updating file list:', error);
@@ -131,6 +138,14 @@ window.onload = async function () {
         console.error("Error initializing the file list:", error);
     }
 };
+
+window.addEventListener('pageshow', (event) => {
+    if (event.persisted) {
+        updateFileList(isCards);
+        
+    }
+});
+
 
 const isCards = true;
 const main = document.getElementById('main');

@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify, session, Response, stream_with_context, render_template
 from app.models import *
 from app import db
+import app
 import requests
 from sqlalchemy import or_
 
@@ -26,7 +27,8 @@ def generate_unique_path(path):
 @user_dashboard_bp.route('/', methods=['GET', 'POST'])
 def render_site():
     user_id = session.get('user_id')
-    if not user_id:
+    user = User.query.get(user_id)
+    if not user:
         ip = request.remote_addr
         tempUser = TempUser.query.filter(TempUser.ip_addr == ip).first()
         if not tempUser:
@@ -35,7 +37,6 @@ def render_site():
             
         return render_template('user_dashboard.html', userName = 'None')
 
-    user = User.query.get(user_id)
     return render_template('user_dashboard.html', userName = f'{user.firstName} {user.lastName}')
 
 @user_dashboard_bp.route('/debug', methods=['GET'])
@@ -151,7 +152,18 @@ def access_file():
         content=file.content
         print(content)
         fileName = file.fileName.split('.')[0]
-        return render_template(template_to_run, content=content, fileid=file_id, filename=fileName )
+        isOwningUser = 1
+
+        
+        if (file.owning_user_id is not None):
+            isOwningUser = 0
+            if (user_id == file.owning_user_id):
+                isOwningUser = 1
+            else:
+                isOwningUser = 0
+
+        
+        return render_template(template_to_run, content=content, fileid=file_id, filename=fileName, isOwningUser=isOwningUser )
 
     return jsonify({
         "status": "NOK", 
@@ -249,68 +261,74 @@ def create_file():
     """
 
 
+    try: 
+        data = request.get_json()
+        
+        # Validate input
+        if not data or 'fileName' not in data:
+            return jsonify({"status": "NOK", "message": "Missing required fields: 'fileName'"}), 400
+        
+        user_id = session.get('user_id')  # Get the logged-in user's ID from the session
 
-    data = request.get_json()
-    
-    # Validate input
-    if not data or 'fileName' not in data:
-        return jsonify({"status": "NOK", "message": "Missing required fields: 'fileName'"}), 400
-    
-    user_id = session.get('user_id')  # Get the logged-in user's ID from the session
+        if not user_id:
+            ip = request.remote_addr
+            tempUser = TempUser.query.filter(TempUser.ip_addr == ip).first()
+            if not tempUser:
+                register_temp_user(ip)
+                    
 
-    if not user_id:
-        ip = request.remote_addr
-        tempUser = TempUser.query.filter(TempUser.ip_addr == ip).first()
-        if not tempUser:
-            register_temp_user(ip)
-                
+        file_name = data['fileName']
+        image = data.get('image', None)
+        content = data.get('content', None)
 
-    file_name = data['fileName']
-    image = data.get('image', None)
-    content = data.get('content', None)
+        try:
+            base, ext = file_name.rsplit('.', 1)
+        except Exception as e:
+            return jsonify({"status": "NOK", "message": f"Filename not formatted correctly: {e}"}), 400
+              
 
-    try:
-        base, ext = file_name.rsplit('.', 1)
-    except Exception as e:
-        return jsonify({"status": "NOK", "message": f"Filename not formatted correctly: {e}"}), 400
-    
-    if user_id:
-        user = User.query.get(user_id)
+        # return({"data":f"fileName: {file_name}, ext: {ext}, content: {content}, owning_user_id: {user_id}"})
+        
+        file = File(fileName=file_name, ext=ext, content=content)
 
-    # return({"data":f"fileName: {file_name}, ext: {ext}, content: {content}, owning_user_id: {user_id}"})
-    
-    file = File(fileName=file_name, ext=ext, content=content)
 
-    file.owning_user_id = user_id
+        # Assign additional attributes
+        if image:
+            file.image = image
 
-    # Assign additional attributes
-    if image:
-        file.image = image
+        if user_id:
+            user = User.query.get(user_id)
+            if user:
+                file.owning_user_id = user_id
+                file.users.append(user)  # Assign the current user to the file
+            else:
+                file.owning_user_id = None
 
-    if user_id:
-        user = User.query.get(user_id)
-        file.users.append(user)  # Assign the current user to the file
 
-    # Commit to the database
-    try:
-        db.session.add(file)
-        db.session.commit()
-    except Exception as e:
-        db.session.rollback()
+        # Commit to the database
+        try:
+            db.session.add(file)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({
+                "status": "NOK",
+                "message": f"An error occurred while committing the file: {str(e)}"
+            }), 500
+
         return jsonify({
-            "status": "NOK",
-            "message": f"An error occurred while committing the file: {str(e)}"
-        }), 500
-
-    return jsonify({
-        "status": "OK",
-        "message": "File created successfully!",
-        "file": {
-            "id": file.id,
-            "name": file.fileName,
-            "extension": file.ext,
-        }
-    }), 201
+            "status": "OK",
+            "message": "File created successfully!",
+            "file": {
+                "id": file.id,
+                "name": file.fileName,
+                "extension": file.ext,
+            }
+        }), 201
+    except Exception as e:
+        app.logger.error(f"Error in create_file route: {str(e)}", exc_info=True)
+        db.session.rollback()
+        return jsonify({"status": "NOK", "message": f"Internal server error: {e}"}), 500
 
 @user_dashboard_bp.route('/set-test-session')
 def set_test_session():

@@ -59,19 +59,16 @@ async function changeFilename(newName) {
 }
 
 // Post route to handle talking to server
-async function editFileContent(fileId, newContent, newFileName = null, newOwnerId = null) {
+async function editFileContent(fileId, newContent, newFileName, newOwnerId = null) {
     const url = '/user-dashboard/edit-file-content';
     const payload = {
         file_id: fileId,
         content: newContent,
+        newFileName: `${newFileName}.des`
     };
 
     // Add optional parameters if provided
-    if (newFileName) {
-        payload.newFileName = newFileName;
-    } else {
-        payload.newFileName = null;
-    }
+    
     if (newOwnerId) {
         payload.newOwnerId = newOwnerId;
     } else {
@@ -108,6 +105,7 @@ async function editFileContent(fileId, newContent, newFileName = null, newOwnerI
 // Get content and script for every file
 const contentScript = document.getElementById('content-data');
 const content = JSON.parse(contentScript.textContent);
+
 const fileId = parseInt(document.getElementById("file-id").textContent, 10);
 
 // Set the API container's styles.
@@ -135,18 +133,30 @@ header.style.width = '100vh';
 // Also, append it to the header for easy development access.
 const saveButton = document.createElement('button');
 saveButton.textContent = 'Save';
-saveButton.onclick = () => editFileContent(fileId, JSON.stringify(api_instance.getState()));
+
 header.appendChild(saveButton);
 
-const nameScript = document.getElementById('file-name');
-const fileName = JSON.parse(nameScript.textContent);
-const nameForm = document.createElement('input');
-nameForm.type = 'text';
-nameForm.value = fileName;
-header.appendChild(nameForm);
+const isOwningUser = parseInt(document.getElementById("is-owning-user").textContent, 10);
+if (isOwningUser === 1) {
+    saveButton.onclick = () => editFileContent(fileId, JSON.stringify(api_instance.getState()), nameForm.value);
+    const nameScript = document.getElementById('file-name');
+    const fileName = JSON.parse(nameScript.textContent);
+    const nameForm = document.createElement('input');
+    nameForm.type = 'text';
+    nameForm.value = fileName;
+    header.appendChild(nameForm);
 
-nameForm.addEventListener('keydown', (event) => {
-    if (event.key === 'Enter') {
-        changeFilename(nameForm.value);
-    }
-});
+    nameForm.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+            const result = changeFilename(nameForm.value);
+            nameForm.value = result.file.name;
+        }
+    });
+} else {
+    saveButton.onclick = () => editFileContent(fileId, JSON.stringify(api_instance.getState()), nameTxT.textContent);
+    const nameScript = document.getElementById('file-name');
+    const fileName = JSON.parse(nameScript.textContent);
+    const nameTxt = document.createElement('p');
+    nameTxt.textContent = fileName;
+    header.appendChild(nameTxt);
+}

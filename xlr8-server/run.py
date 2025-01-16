@@ -1,6 +1,6 @@
 from app import create_app, db
 import config
-from flask import g
+from flask import g, session
 from app.models import *
 import secrets
 
@@ -19,6 +19,9 @@ app = create_app(config.TestingConfig)
 #     )
 #     return response
 
+@app.route('/debug-session')
+def debug_session():
+    return str(session)
 
 if __name__ == '__main__':
 

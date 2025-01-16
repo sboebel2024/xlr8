@@ -23,6 +23,10 @@
     <script id="file-name" type="application/json">
         {{ filename | tojson | safe }}
     </script>
+    <script id="is-owning-user" type="application/json">
+        {{ isOwningUser | safe }} 
+    </script> <!-- "1" is True, "0" is False -->
+    
     
     
     <script src="{{ url_for('static', filename='js/serve_desmos_script.js') }}" defer></script>

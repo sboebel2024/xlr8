@@ -80,13 +80,13 @@ class File(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     fileName = db.Column(db.String(50), nullable=False)
-    path = db.Column(db.String(255), nullable=True, unique=True)
+    path = db.Column(db.String(255), nullable=True)
     ext = db.Column(db.String(50), nullable=False)
     version = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc))
     created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc), nullable=False)
     content = db.Column(db.Text, nullable=False)
     
-    owning_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    owning_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), default=None)
     orgs = db.relationship('Org', secondary=file_orgs_table, back_populates='files')
     users = db.relationship('User', secondary=user_file_table, backref='files')
 
