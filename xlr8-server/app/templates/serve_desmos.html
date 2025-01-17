@@ -26,7 +26,9 @@
     <script id="is-owning-user" type="application/json">
         {{ isOwningUser | safe }} 
     </script> <!-- "1" is True, "0" is False -->
-    
+    <script id="user-name" type="application/json">
+        {{ userFname | tojson | safe }} 
+    </script>
     
     
     <script src="{{ url_for('static', filename='js/serve_desmos_script.js') }}" defer></script>

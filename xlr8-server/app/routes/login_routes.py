@@ -19,7 +19,7 @@ def login():
         db.session.add(user)
         db.session.commit()
         session['user_id'] = user.id
-        return jsonify({"status": "OK", "message": "Login successful"}), 200
+        return jsonify({"status": "OK", "message": f"Login successful for {user.firstName} {user.lastName} with id {user.id} and session {dict(session)}"}), 200
     
     return jsonify({"status": "NOK", "message": "Missing username or Password"}), 401
 

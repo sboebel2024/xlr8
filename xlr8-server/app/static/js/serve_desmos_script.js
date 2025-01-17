@@ -108,6 +108,9 @@ const content = JSON.parse(contentScript.textContent);
 
 const fileId = parseInt(document.getElementById("file-id").textContent, 10);
 
+const userScript = document.getElementById('user-name');
+const userName = JSON.parse(userScript.textContent)
+
 // Set the API container's styles.
 const api_container = document.getElementById('api_container');
 api_container.style.width = '100vw';
@@ -160,3 +163,7 @@ if (isOwningUser === 1) {
     nameTxt.textContent = fileName;
     header.appendChild(nameTxt);
 }
+
+userNameP = document.createElement('p');
+userNameP.textContent = `User: ${userName}`;
+header.appendChild(userNameP);

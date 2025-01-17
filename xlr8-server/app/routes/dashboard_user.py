@@ -20,12 +20,26 @@ def generate_unique_path(path):
         new_path = f"{base}({counter}).{ext}" if ext else f"{base}({counter})"
     return new_path
 
+@user_dashboard_bp.route('/set-user-cookie', methods=["POST"])
+def set_user_cookie():
+    data = request.get_json()
+    user_id = data["user_id"]
+    session['user_id'] = user_id
+    return jsonify({"status": "OK", "message" : f"{dict(session)}"})
+                    
 
-# THIS IS A PROTOTYPE ROUTE TO TEST THE **DESMOS** STUFF!!!
-# REPLACE WITH A ROUTE THAT LOOKS UP WHAT HTML FILE TO SERVE,
-# AND THEN SERVES IT. 
+@user_dashboard_bp.route('/get-session')
+def get_session():
+    return jsonify({"status": "OK", "message" : f"{dict(session)}"})
+                    
+@user_dashboard_bp.route('/clear-session')
+def clear_session():
+    session.clear()
+    return jsonify({"status": "OK", "message": f"Session cleared: {dict(session)}"}), 200
+
 @user_dashboard_bp.route('/', methods=['GET', 'POST'])
 def render_site():
+    print(dict(session))
     user_id = session.get('user_id')
     user = User.query.get(user_id)
     if not user:
@@ -35,9 +49,11 @@ def render_site():
             tempUser = register_temp_user(ip)
             print(f"Temp User ID: {tempUser.id}")
             
+        print(f"Temp User ID: {tempUser.id}")
         return render_template('user_dashboard.html', userName = 'None')
 
-    return render_template('user_dashboard.html', userName = f'{user.firstName} {user.lastName}')
+    print(f"Session User ID: {user.id}")
+    return render_template('user_dashboard.html', userName = f"{user.firstName} {user.lastName}")
 
 @user_dashboard_bp.route('/debug', methods=['GET'])
 def debug():
@@ -138,6 +154,8 @@ def access_file():
             tempUser = register_temp_user(ip)
             print(f"Temp User ID: {tempUser.id}")
 
+        userFname = str("Not Logged in!")
+
 
     file = File.query.get(file_id)
     if not file:
@@ -147,14 +165,23 @@ def access_file():
     db.session.add(access_log)
     db.session.commit()
 
+    if user_id:
+        user = User.query.get(user_id)
+        if user:
+            userFname = str(user.firstName)
+        if not user: 
+            tempUser = register_temp_user(ip)
+            print(f"Temp User ID: {tempUser.id}")
+            userFname = str("Not Logged in!")
+
     if file.ext in ext_lookup_json:
         template_to_run = ext_lookup_json[file.ext]
         content=file.content
         print(content)
         fileName = file.fileName.split('.')[0]
-        isOwningUser = 1
 
         
+        isOwningUser = 1
         if (file.owning_user_id is not None):
             isOwningUser = 0
             if (user_id == file.owning_user_id):
@@ -163,7 +190,7 @@ def access_file():
                 isOwningUser = 0
 
         
-        return render_template(template_to_run, content=content, fileid=file_id, filename=fileName, isOwningUser=isOwningUser )
+        return render_template(template_to_run, content=content, fileid=file_id, filename=fileName, isOwningUser=isOwningUser, userFname=userFname )
 
     return jsonify({
         "status": "NOK", 
@@ -335,3 +362,20 @@ def set_test_session():
     session['user_id'] = 1  # Set user_id for testing
     return "Test session set!"
  
+
+
+@user_dashboard_bp.route('/delete-file', methods=['POST'])
+def delete_file():
+    data = request.get_json()
+    file_id = data['file_id']
+    file = File.query.get(file_id)
+
+    if file:
+        try:
+            db.session.delete(file) 
+            db.session.commit()     
+            return jsonify({"status":"OK", "message": f"File with ID {file_id} deleted successfully."})
+        except Exception as e:
+            db.session.rollback()   
+            return jsonify({"status":"NOK", "message": f"Error deleting file: {e}"})
+
