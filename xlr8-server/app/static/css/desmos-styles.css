@@ -1,0 +1,9 @@
+.remote-cursor {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background-color: blue;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 1000;
+}

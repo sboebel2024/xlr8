@@ -12,7 +12,38 @@
     <script id="user-name" type="application/json">
         {{ userName | tojson | safe }}
     </script>
-    <script src="{{ url_for('static', filename='js/user_dashboard.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/src/user_dashboard.js') }}" defer></script>
 </body>
 </html>
 
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Test</title>
+    <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
+</head>
+<body>
+    <h1>WebSocket Test</h1>
+    <button id="testButton">Test WebSocket</button>
+    <div id="output"></div>
+
+    <script>
+        // Connect to the WebSocket server
+        const socket = io('http://localhost:5000');
+
+        // Handle button click to emit a test event
+        document.getElementById('testButton').addEventListener('click', () => {
+            socket.emit('test_event', { message: 'Hello from the client!' });
+        });
+
+        // Listen for the server's response
+        socket.on('test_response', (data) => {
+            console.log(data);
+            document.getElementById('output').innerText = data.message;
+        });
+    </script>
+</body>
+</html> -->

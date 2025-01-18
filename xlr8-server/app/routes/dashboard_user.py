@@ -4,9 +4,10 @@ from app import db
 import app
 import requests
 from sqlalchemy import or_
+from flask_socketio import SocketIO, join_room, leave_room, emit
+
 
 user_dashboard_bp = Blueprint('user_dashboard', __name__)
-
 
 def generate_unique_path(path):
     """
@@ -155,6 +156,7 @@ def access_file():
             print(f"Temp User ID: {tempUser.id}")
 
         userFname = str("Not Logged in!")
+        pan_userid = tempUser.id
 
 
     file = File.query.get(file_id)
@@ -169,10 +171,14 @@ def access_file():
         user = User.query.get(user_id)
         if user:
             userFname = str(user.firstName)
+            pan_userid = user_id
         if not user: 
             tempUser = register_temp_user(ip)
             print(f"Temp User ID: {tempUser.id}")
             userFname = str("Not Logged in!")
+            pan_userid = tempUser.id
+            
+
 
     if file.ext in ext_lookup_json:
         template_to_run = ext_lookup_json[file.ext]
@@ -190,7 +196,8 @@ def access_file():
                 isOwningUser = 0
 
         
-        return render_template(template_to_run, content=content, fileid=file_id, filename=fileName, isOwningUser=isOwningUser, userFname=userFname )
+        
+        return render_template(template_to_run, content=content, fileid=file_id, filename=fileName, isOwningUser=isOwningUser, userFname=userFname, userid = pan_userid )
 
     return jsonify({
         "status": "NOK", 

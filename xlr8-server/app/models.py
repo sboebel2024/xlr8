@@ -234,7 +234,7 @@ class FileAccessLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=True)
     temp_user_id = db.Column(db.Integer, db.ForeignKey('tempusers.id', ondelete='CASCADE'), nullable=True)
-    file_id = db.Column(db.Integer, db.ForeignKey('files.id', ondelete='CASCADE'), nullable=False)
+    file_id = db.Column(db.Integer, db.ForeignKey('files.id', ondelete='CASCADE'), nullable=True)
     accessed_at = db.Column(db.DateTime, default=datetime.now(timezone.utc), nullable=False)
 
     user = db.relationship('User', backref='file_access_logs')

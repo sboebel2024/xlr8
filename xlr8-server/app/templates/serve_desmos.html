@@ -4,7 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>xlr8 ~ desmos</title>
+    <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
+    <script src=""></script>
     <script src="https://www.desmos.com/api/v1.7/calculator.js?apiKey=dcb31709b452b1cf9dc26972add0fda6"></script>
+    <style src="{{ url_for('static', filename='css/desmos-styles.css')}}" defer ></style>
 </head>
 
 <body>
@@ -29,8 +32,11 @@
     <script id="user-name" type="application/json">
         {{ userFname | tojson | safe }} 
     </script>
+    <script id="user-id" type="application/json">
+        {{ userid | safe }} 
+    </script>
     
     
-    <script src="{{ url_for('static', filename='js/serve_desmos_script.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/src/serve_desmos_script.js') }}" defer></script>
 </body>
 </html>
