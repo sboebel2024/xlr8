@@ -155,7 +155,7 @@ def access_file():
             tempUser = register_temp_user(ip)
             print(f"Temp User ID: {tempUser.id}")
 
-        userFname = str("Not Logged in!")
+        userFname = str("BAD_USERNAME_#$&^%")
         pan_userid = tempUser.id
 
 

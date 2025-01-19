@@ -2,26 +2,150 @@
 // write a loop listening for calculator.getState() changes and save after
 // a certain volume of changes
 
-class API {
-    constructor(targetObject, setStateMethod, getStateMethod) {
-        this.targetObject = targetObject;
 
-        this.setState = (data) => {
-            if (typeof this.targetObject[setStateMethod] === 'function') {
-                this.targetObject[setStateMethod](data); // Call the dynamic setter
+calculator = Desmos.GraphingCalculator(document.getElementById('api_container'));
+
+let isUserTyping = false; // Track if the user is actively typing
+let typingTimeout; // Timeout for debouncing emissions
+let lastAppliedState = JSON.stringify(calculator.getState()); // Track last applied state
+let lastEmittedState = JSON.stringify(calculator.getState()); // Track last emitted state
+let focusedExpressionId = null;
+let lastFocusedLocation = null;
+
+function simulateClick(delay = 0) {
+    if (lastFocusedLocation) {
+        setTimeout(() => {
+            // Find the element at the stored location
+            const targetElement = document.elementFromPoint(lastFocusedLocation.x, lastFocusedLocation.y);
+
+            if (targetElement) {
+                console.log("Restoring focus by clicking element at:", lastFocusedLocation);
+
+                // Simulate full mouse interaction on the target element
+                const mousedownEvent = new MouseEvent("mousedown", {
+                    bubbles: true,
+                    cancelable: true,
+                    view: window,
+                    clientX: lastFocusedLocation.x,
+                    clientY: lastFocusedLocation.y,
+                });
+                targetElement.dispatchEvent(mousedownEvent);
+
+                const mouseupEvent = new MouseEvent("mouseup", {
+                    bubbles: true,
+                    cancelable: true,
+                    view: window,
+                    clientX: lastFocusedLocation.x,
+                    clientY: lastFocusedLocation.y,
+                });
+                targetElement.dispatchEvent(mouseupEvent);
+
+                const clickEvent = new MouseEvent("click", {
+                    bubbles: true,
+                    cancelable: true,
+                    view: window,
+                    clientX: lastFocusedLocation.x,
+                    clientY: lastFocusedLocation.y,
+                });
+                targetElement.dispatchEvent(clickEvent);
+
+                console.log("Focus restored successfully.");
             } else {
-                throw new Error(`Method ${setStateMethod} does not exist on the target object.`);
+                console.warn("No element found at the stored location.");
             }
-        };
+        }, delay); // Delay to ensure the update has completed
+    } else {
+        console.warn("No location stored for restoring focus.");
+    }
+}
 
-        this.getState = () => {
-            if (typeof this.targetObject[getStateMethod] === 'function') {
-                return this.targetObject[getStateMethod](); // Call the dynamic getter
-            } else {
-                throw new Error(`Method ${getStateMethod} does not exist on the target object.`);
-            }
-        };
+document.addEventListener("mousemove", (event) => {
+    cursorX = event.clientX; // X-coordinate of the cursor
+    cursorY = event.clientY; // Y-coordinate of the cursor
+    // console.log("Cursor position:", { x: cursorX, y: cursorY });
+});
 
+function captureFocusedElementLocation() {
+    // Locate the element with the "dcg-selected" class
+    const focusedElement = document.querySelector(".dcg-selected");
+
+    if (focusedElement) {
+        const rect = focusedElement.getBoundingClientRect(); // Get its bounding rectangle
+        lastFocusedLocation = {
+            x: rect.left + rect.width / 2, // Horizontal center of the element
+            y: rect.top + 1*rect.height / 8, // Vertical center of the element
+        };
+        console.log("Captured focused element location:", lastFocusedLocation);
+    } else {
+        lastFocusedLocation = null; // Reset if no element is focused
+        console.warn("No focused element found to capture location.");
+    }
+}
+
+function applyStateUpdate(newState) {
+    if (isUserTyping) {
+        console.log("User is typing, skipping state application");
+        return; // Do not apply updates while the user is typing
+    }
+
+    captureFocusedElementLocation();
+
+    const incomingExpressions = Array.isArray(newState.expressions?.list)
+        ? newState.expressions.list
+        : [];
+    console.log("Incoming expressions:", incomingExpressions);
+
+    const currentState = calculator.getState();
+    const updatedState = {
+        ...currentState, // Preserve other settings
+        expressions: { list: incomingExpressions }, // Update expressions
+    };
+
+    const newStateString = JSON.stringify(updatedState);
+    if (newStateString === lastAppliedState) {
+        console.log("State unchanged, skipping update.");
+        return;
+    }
+
+    calculator.setState(updatedState); // Apply the updated state
+    lastAppliedState = newStateString; // Update last applied state
+    
+    simulateClick(0);
+
+    console.log("Updated state successfully applied!");
+}
+
+calculator.observeEvent("change", () => {
+    const expressions = calculator.getExpressions();
+    const activeExpression = expressions.find(expr => expr.latex && expr.isEditing);
+
+    if (activeExpression) {
+        activeExpressionId = activeExpression.id; // Track the ID of the active expression
+        console.log("User is typing in expression:", activeExpressionId);
+    } else {
+        activeExpressionId = null; // No active expression
+    }
+});
+
+function emitStateUpdate() {
+    if (isUserTyping) {
+        console.log("User is typing, skipping state emission");
+        return; // Do not emit while the user is typing
+    }
+
+    const currentState = calculator.getState();
+    const currentStateString = JSON.stringify(currentState);
+
+    if (currentStateString !== lastEmittedState) {
+        lastEmittedState = currentStateString; // Update last emitted state
+        socket.emit("state_update", {
+            file_id: fileId,
+            user_id: `User${userId}`,
+            state: currentState,
+        });
+        console.log("State emitted to server:", currentState);
+    } else {
+        console.log("State unchanged, not emitting.");
     }
 }
 
@@ -111,7 +235,17 @@ function highlightElement(element, userId) {
     }, 1000);
 }
 
-// Get content and script for every file
+// -----------------------------------------------------------------------
+
+const body = document.body;
+body.style.margin = '0px';
+body.style.height = '100%'
+
+const html = document.documentElement;
+html.style.maxWidth = '100%';
+html.style.maxHeight = '100%';
+html.style.height = '100%';
+
 const contentScript = document.getElementById('content-data');
 const content = JSON.parse(contentScript.textContent);
 
@@ -121,34 +255,51 @@ const userId = parseInt(document.getElementById("user-id").textContent, 10);
 const userScript = document.getElementById('user-name');
 const userName = JSON.parse(userScript.textContent)
 
-// Set the API container's styles.
 const api_container = document.getElementById('api_container');
-api_container.style.width = '100vw';
-api_container.style.height = '95vh';
-
-// -------------------------------- ONLY CHANGE THESE LINES ----------------------------------
-
-calculator = Desmos.GraphingCalculator(document.getElementById('api_container'));
-
-
-
-// -------------------------------------------------------------------------------------------
-
-// Set state
+api_container.style.width = '99.7vw';
+api_container.style.height = 'calc(99.7vh - 50px)';
+api_container.style.margin = '0px';
 calculator.setState(content);
 
-// Set header stuff. Change this so it looks better for production!
 const header = document.getElementById('header');
-header.style.height = '5vh';
-header.style.width = '100vh';
+header.style.height = '50px';
+header.style.display = 'flex';
+header.style.flexDirection = 'row';
+header.style.justifyContent = 'left';
+header.style.alignItems = 'center';
+header.style.position ='relative';
+header.style.gap = '5px';
 
-// Create the save button and equip it with the editFileContent method.
-// Also, append it to the header for easy development access.
+const logo = document.createElement('div');
+logo.style.width = '35px';
+logo.style.height = '50px';
+logo.innerText = 'xlr8';
+logo.style.display = 'flex';
+logo.style.alignItems = 'center';
+logo.style.justifyContent = 'center';
+logo.style.marginLeft = '20px';
+logo.style.fontFamily = 'Arial, sans-serif';
+logo.style.fontWeight = 'bold';
+logo.style.fontSize = '20px';
+header.appendChild(logo);
+
+const pathLogo = document.createElement('div');
+pathLogo.style.width = '20px';
+pathLogo.style.height = '50px';
+pathLogo.innerText = '/';
+pathLogo.style.display = 'flex';
+pathLogo.style.alignItems = 'center';
+pathLogo.style.justifyContent = 'center';
+pathLogo.style.fontFamily = 'Arial, sans-serif';
+pathLogo.style.fontWeight = 'bold';
+pathLogo.style.fontSize = '20px';
+header.appendChild(pathLogo);
+
 const saveButton = document.createElement('button');
-saveButton.textContent = 'Save';
 
-header.appendChild(saveButton);
 
+
+// Allow the file name to be changed only by the owning user
 const isOwningUser = parseInt(document.getElementById("is-owning-user").textContent, 10);
 if (isOwningUser === 1) {
     saveButton.onclick = () => editFileContent(fileId, JSON.stringify(calculator.getState()), nameForm.value);
@@ -157,6 +308,25 @@ if (isOwningUser === 1) {
     const nameForm = document.createElement('input');
     nameForm.type = 'text';
     nameForm.value = fileName;
+    nameForm.style.all = 'unset';
+    nameForm.style.fontFamily = 'Arial, sans-serif';
+    nameForm.style.fontSize = '18px';
+    nameForm.setAttribute('spellcheck', 'false');
+
+    function adjustInputWidth() {
+        const charWidth = 10;
+        const padding = 20;
+        const contentLength = nameForm.value.length;
+        const width = contentLength*charWidth + padding;
+        if (width > 150) {
+            nameForm.style.width = '150px';
+        } else {
+            nameForm.style.width = `${width}px`;
+        }
+    }
+
+    adjustInputWidth();
+    
     header.appendChild(nameForm);
 
     nameForm.addEventListener('keydown', (event) => {
@@ -164,33 +334,165 @@ if (isOwningUser === 1) {
             const result = changeFilename(nameForm.value);
             nameForm.value = result.file.name;
         }
+        adjustInputWidth();
     });
+
+    
+
 } else {
-    saveButton.onclick = () => editFileContent(fileId, JSON.stringify(calculator.getState()), nameTxT.textContent);
     const nameScript = document.getElementById('file-name');
     const fileName = JSON.parse(nameScript.textContent);
     const nameTxt = document.createElement('p');
     nameTxt.textContent = fileName;
+    nameTxt.style.width = '75px'
     header.appendChild(nameTxt);
+    saveButton.onclick = () => editFileContent(fileId, JSON.stringify(calculator.getState()), nameTxt.textContent);
 }
 
-userNameP = document.createElement('p');
-userNameP.textContent = `User: ${userName}`;
-header.appendChild(userNameP);
+saveButton.style.all = 'unset';
+saveButton.style.marginLeft = '5px';
+saveButton.style.marginRight = '5px';
+saveButton.style.display = 'inline-block';
+saveButton.style.width = '40px';
+saveButton.style.height = '40px';
+saveButton.style.display = 'flex';
+saveButton.style.color = '#AAA'
+saveButton.style.borderRadius = '10px';
+saveButton.style.justifyContent = 'center';
+saveButton.style.alignItems = 'center';
+saveButton.classList.add("logo-button");
+saveButton.style.cursor = 'pointer';
+
+const savePopup = document.createElement('div');
+saveButton.addEventListener("mouseenter", () => {
+    setTimeout( () => {
+        const saveButtonRect = saveButton.getBoundingClientRect(); 
+        saveButton.style.backgroundColor = "#AAA";
+        saveButton.style.color = "#444"
+        savePopup.style.position = 'absolute';
+        savePopup.style.top = `${saveButtonRect.top + 48}px`;
+        console.log(`${saveButtonRect.right}`)
+        savePopup.style.left = `${saveButtonRect.left - 20}px`;
+        savePopup.style.width = '80px';
+        savePopup.style.height = '28px';
+        savePopup.style.borderRadius = '7px';
+        savePopup.style.backgroundColor = '#000';
+        savePopup.innerText = 'force save';
+        savePopup.style.color = '#FFF';
+        savePopup.style.fontSize = '14px';
+        savePopup.style.display = 'flex';
+        savePopup.style.alignItems = 'center';
+        savePopup.style.fontFamily = 'Arial, sans-serif';
+        savePopup.style.justifyContent = 'center';
+        
+        const triangle = document.createElement('div');
+        triangle.style.position = 'absolute';
+        triangle.style.width = '0';
+        triangle.style.height = '0';
+        triangle.style.borderLeft = '5px solid transparent';
+        triangle.style.borderRight = '5px solid transparent';
+        triangle.style.borderBottom = '5px solid #000';
+        triangle.style.top = '-5px';
+        triangle.style.left = '50%';
+        triangle.style.transform = 'translateX(-50%)';
+        document.body.appendChild(savePopup);
+        savePopup.appendChild(triangle);
+        
+    }, 0);
+});
+saveButton.addEventListener("mousedown", () => {
+    saveButton.style.backgroundColor = '#FFF';
+});
+saveButton.addEventListener("mouseup", () => {
+    saveButton.style.backgroundColor = '#AAA';
+});
+
+saveButton.addEventListener("mouseleave", () => {
+    saveButton.style.backgroundColor = "";
+    saveButton.style.color = "#AAA";
+    setTimeout(() =>{document.body.removeChild(savePopup)}, 0);
+});
+
+header.appendChild(saveButton);
+
+const icon = document.createElement('i');
+icon.classList.add('fas', 'fa-arrow-up');
+
+saveButton.appendChild(icon);
+
+// Display who is accessing the file (for debugging & user context;
+// can also attach a link to this thing later)
+userNameContainer = document.createElement('button');
+userNameContainer.style.all = 'unset';
+if (userName === "BAD_USERNAME_#$&^%") {
+    rightArrow = document.createElement('i');
+    rightArrow.classList.add('fas', 'fa-arrow-right');
+    userNameContainer.appendChild(rightArrow);
+    userNameContainer.style.width = '40px';
+    userNameContainer.style.height = '40px';
+    userNameContainer.style.color = '#AAA';
+    userNameContainer.style.display = 'flex';
+    userNameContainer.style.alignItems = 'center';
+    userNameContainer.style.justifyContent = 'center';
+    userNameContainer.style.borderRadius = '10px';
+    userNameContainer.style.cursor = 'pointer';
+    const savePopup2 = document.createElement('div');
+    userNameContainer.addEventListener('mouseenter', () => {
+        const userButtonRect = userNameContainer.getBoundingClientRect(); 
+        userNameContainer.style.backgroundColor = '#AAA';
+        userNameContainer.style.color = '#444';
+        savePopup2.style.position = 'absolute';
+        savePopup2.style.top = `${userButtonRect.top + 48}px`;
+        
+        savePopup2.style.left = `${userButtonRect.left - 10}px`;
+        savePopup2.style.width = '60px';
+        savePopup2.style.height = '28px';
+        savePopup2.style.borderRadius = '7px';
+        savePopup2.style.backgroundColor = '#000';
+        savePopup2.innerText = 'Log In';
+        savePopup2.style.color = '#FFF';
+        savePopup2.style.fontSize = '14px';
+        savePopup2.style.display = 'flex';
+        savePopup2.style.alignItems = 'center';
+        savePopup2.style.fontFamily = 'Arial, sans-serif';
+        savePopup2.style.justifyContent = 'center';
+        
+        const triangle2 = document.createElement('div');
+        triangle2.style.position = 'absolute';
+        triangle2.style.width = '0';
+        triangle2.style.height = '0';
+        triangle2.style.borderLeft = '5px solid transparent';
+        triangle2.style.borderRight = '5px solid transparent';
+        triangle2.style.borderBottom = '5px solid #000';
+        triangle2.style.top = '-5px';
+        triangle2.style.left = '50%';
+        triangle2.style.transform = 'translateX(-50%)';
+        document.body.appendChild(savePopup2);
+        savePopup2.appendChild(triangle2);
+    });
+
+    userNameContainer.addEventListener("mousedown", () => {
+        userNameContainer.style.backgroundColor = '#FFF';
+    });
+    userNameContainer.addEventListener("mouseup", () => {
+        userNameContainer.style.backgroundColor = '#AAA';
+    });
+
+    userNameContainer.addEventListener('mouseleave', () => {
+        userNameContainer.style.backgroundColor = "";
+        userNameContainer.style.color = "#AAA";
+        setTimeout(() =>{document.body.removeChild(savePopup2)}, 0);
+    });
+
+
+} else {
+
+}
+header.appendChild(userNameContainer);
 
 const socket = io('http://localhost:5000');
-
 console.log(`User ID: ${userId}, File ID: ${fileId}`);
-
 socket.emit('join', { file_id: fileId, user_id: `User${userId}` });
-
-let isUserTyping = false; // Track if the user is actively typing
-let typingTimeout; // Timeout for debouncing emissions
-let lastAppliedState = JSON.stringify(calculator.getState()); // Track last applied state
-let lastEmittedState = JSON.stringify(calculator.getState()); // Track last emitted state
-let focusedExpressionId = null;
-let activeExpressionId = null;
-let lastFocusedLocation = null;
 
 socket.on('state_update', (data) => {
     console.log('Received state update:', data);
@@ -204,121 +506,6 @@ socket.on('state_update', (data) => {
     applyStateUpdate(data.state);
 });
 
-function simulateClick(delay = 0) {
-    if (lastFocusedLocation) {
-        setTimeout(() => {
-            // Find the element at the stored location
-            const targetElement = document.elementFromPoint(lastFocusedLocation.x, lastFocusedLocation.y);
-
-            if (targetElement) {
-                console.log("Restoring focus by clicking element at:", lastFocusedLocation);
-
-                // Simulate full mouse interaction on the target element
-                const mousedownEvent = new MouseEvent("mousedown", {
-                    bubbles: true,
-                    cancelable: true,
-                    view: window,
-                    clientX: lastFocusedLocation.x,
-                    clientY: lastFocusedLocation.y,
-                });
-                targetElement.dispatchEvent(mousedownEvent);
-
-                const mouseupEvent = new MouseEvent("mouseup", {
-                    bubbles: true,
-                    cancelable: true,
-                    view: window,
-                    clientX: lastFocusedLocation.x,
-                    clientY: lastFocusedLocation.y,
-                });
-                targetElement.dispatchEvent(mouseupEvent);
-
-                const clickEvent = new MouseEvent("click", {
-                    bubbles: true,
-                    cancelable: true,
-                    view: window,
-                    clientX: lastFocusedLocation.x,
-                    clientY: lastFocusedLocation.y,
-                });
-                targetElement.dispatchEvent(clickEvent);
-
-                console.log("Focus restored successfully.");
-            } else {
-                console.warn("No element found at the stored location.");
-            }
-        }, delay); // Delay to ensure the update has completed
-    } else {
-        console.warn("No location stored for restoring focus.");
-    }
-}
-
-document.addEventListener("mousemove", (event) => {
-    cursorX = event.clientX; // X-coordinate of the cursor
-    cursorY = event.clientY; // Y-coordinate of the cursor
-    // console.log("Cursor position:", { x: cursorX, y: cursorY });
-});
-
-function captureFocusedElementLocation() {
-    // Locate the element with the "dcg-selected" class
-    const focusedElement = document.querySelector(".dcg-selected");
-
-    if (focusedElement) {
-        const rect = focusedElement.getBoundingClientRect(); // Get its bounding rectangle
-        lastFocusedLocation = {
-            x: rect.left + rect.width / 2, // Horizontal center of the element
-            y: rect.top + rect.height / 2, // Vertical center of the element
-        };
-        console.log("Captured focused element location:", lastFocusedLocation);
-    } else {
-        lastFocusedLocation = null; // Reset if no element is focused
-        console.warn("No focused element found to capture location.");
-    }
-}
-
-function applyStateUpdate(newState) {
-    if (isUserTyping) {
-        console.log("User is typing, skipping state application");
-        return; // Do not apply updates while the user is typing
-    }
-
-    captureFocusedElementLocation();
-
-    const incomingExpressions = Array.isArray(newState.expressions?.list)
-        ? newState.expressions.list
-        : [];
-    console.log("Incoming expressions:", incomingExpressions);
-
-    const currentState = calculator.getState();
-    const updatedState = {
-        ...currentState, // Preserve other settings
-        expressions: { list: incomingExpressions }, // Update expressions
-    };
-
-    const newStateString = JSON.stringify(updatedState);
-    if (newStateString === lastAppliedState) {
-        console.log("State unchanged, skipping update.");
-        return;
-    }
-
-    calculator.setState(updatedState); // Apply the updated state
-    lastAppliedState = newStateString; // Update last applied state
-    
-    simulateClick(0);
-
-    console.log("Updated state successfully applied!");
-}
-
-calculator.observeEvent("change", () => {
-    const expressions = calculator.getExpressions();
-    const activeExpression = expressions.find(expr => expr.latex && expr.isEditing);
-
-    if (activeExpression) {
-        activeExpressionId = activeExpression.id; // Track the ID of the active expression
-        console.log("User is typing in expression:", activeExpressionId);
-    } else {
-        activeExpressionId = null; // No active expression
-    }
-});
-
 calculator.observeEvent("change", () => {
     console.log("User is typing...");
     isUserTyping = true;
@@ -330,30 +517,6 @@ calculator.observeEvent("change", () => {
         emitStateUpdate(); // Emit the state after typing stops
     }, 500); // Debounce delay (adjust as needed)
 });
-
-// Emit state changes to the server (throttled for performance)
-function emitStateUpdate() {
-    if (isUserTyping) {
-        console.log("User is typing, skipping state emission");
-        return; // Do not emit while the user is typing
-    }
-
-    const currentState = calculator.getState();
-    const currentStateString = JSON.stringify(currentState);
-
-    if (currentStateString !== lastEmittedState) {
-        lastEmittedState = currentStateString; // Update last emitted state
-        socket.emit("state_update", {
-            file_id: fileId,
-            user_id: `User${userId}`,
-            state: currentState,
-        });
-        console.log("State emitted to server:", currentState);
-    } else {
-        console.log("State unchanged, not emitting.");
-    }
-}
-
 
 // Monitor calculator state for changes and emit them
 calculator.observeEvent('change', emitStateUpdate);

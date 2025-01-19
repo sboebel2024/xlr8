@@ -12,6 +12,7 @@
     <script id="user-name" type="application/json">
         {{ userName | tojson | safe }}
     </script>
+    <style src="{{ url_for('static', filename='css/user-dashboard-styles.css')}}" defer ></style>
     <script src="{{ url_for('static', filename='js/src/user_dashboard.js') }}" defer></script>
 </body>
 </html>
