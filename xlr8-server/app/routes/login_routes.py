@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, session
+from flask import Blueprint, request, jsonify, session, render_template
 from werkzeug.security import check_password_hash
 from app.models import User
 from app import db
@@ -19,9 +19,16 @@ def login():
         db.session.add(user)
         db.session.commit()
         session['user_id'] = user.id
-        return jsonify({"status": "OK", "message": f"Login successful for {user.firstName} {user.lastName} with id {user.id} and session {dict(session)}"}), 200
+        return jsonify({"status": "OK", "message": f"Login successful!", "user_id":f"{user.id}"}), 200
     
     return jsonify({"status": "NOK", "message": "Missing username or Password"}), 401
 
 
     
+@login_bp.route('/render-login', methods=['GET'])
+def render_login():
+    file_id = request.args.get('file_id')
+    if file_id:
+        return render_template('login_page.html', fileid=file_id)
+    else:
+        return render_template('login_page.html', fileId="-1")

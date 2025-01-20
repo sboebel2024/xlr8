@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='favicon-16x16.png') }}">
+    <link rel="manifest" href="{{ url_for('static', filename='site.webmanifest') }}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>xlr8 ~ login</title>
+</head>
+<body style="font-family: Arial, sans-serif; text-align: center; padding-top: 50px;">
+
+    <h2 style="color: #000;">xlr8 / login</h2>
+
+    <label for="username" style="font-weight: bold;">Username:</label>
+    <input type="text" id="username" placeholder="Enter your username"
+        style="margin-bottom: 10px; padding: 8px; width: 200px; border: 1px solid #ccc; border-radius: 4px;">
+    <br><br>
+
+    <label for="password" style="font-weight: bold;">Password:</label>
+    <input type="password" id="password" placeholder="Enter your password"
+        style="margin-bottom: 10px; padding: 8px; width: 200px; border: 1px solid #ccc; border-radius: 4px;">
+    <br><br>
+
+    <button id="loginButton" 
+        style="padding: 10px 20px; border: none; background-color: #007bff; color: white; border-radius: 4px; cursor: pointer;">
+        Login
+    </button>
+
+    <p id="message" style="margin-top: 20px; font-weight: bold; color: red;"></p>
+
+    <script id="file-id" type="application/json">
+        {{ fileid | default('null') | safe }}
+    </script>
+
+    <script>
+
+        async function log_in() {
+            // Get input values
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const messageElement = document.getElementById('message');
+
+            // Basic validation
+            if (username === '' || password === '') {
+                messageElement.innerText = 'Please fill in both fields.';
+                return;
+            }
+
+            //add fetch method here
+            const payload = {
+                username: username,
+                password: password
+            };
+
+            // Fetch API call to the login endpoint
+            fetch('/login/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(response => response.json())
+            .then(async data => {
+                if (data.status === 'OK') {
+                    messageElement.style.color = 'green';
+                    messageElement.innerText = data.message;
+                    console.log('Login successful:', data);
+                    userId = data.user_id;
+                    
+                    if (fileId ) {
+                        const payload2 = {
+                            file_id: fileId,
+                            user_id: userId
+                        };
+
+                        fetch('/user-dashboard/add-user-to-file', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(payload2)
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.status === 'OK') {
+                                console.log(`Success!`);
+                                messageElement.innerText = 'Redirecting...';
+                                window.location.href = '/user-dashboard/';
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                    } else {
+                        window.location.href = '/user-dashboard';
+                    }
+
+                } else {
+                    messageElement.style.color = 'red';
+                    messageElement.innerText = data.message;
+                    console.log('Login failed:', data);
+                }
+            })
+            .catch(error => {
+                messageElement.style.color = 'red';
+                messageElement.innerText = 'Error during login. Please try again later.';
+                console.error('Error:', error);
+            });
+            
+        }
+        // Login button event listener
+        let fileIdText = document.getElementById("file-id").textContent.trim();
+        let fileId = fileIdText !== "null" ? parseInt(fileIdText, 10) : NaN;
+        document.getElementById('loginButton').addEventListener('click', function() {
+            log_in();
+        });
+        document.getElementById('password').addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                log_in();
+            }
+        });
+    </script>
+
+</body>
+</html>

@@ -190,6 +190,7 @@ async function editFileContent(fileId, newContent, newFileName, newOwnerId = nul
         content: newContent,
         newFileName: `${newFileName}.des`
     };
+    console.log(fileId);
 
     // Add optional parameters if provided
     
@@ -219,6 +220,7 @@ async function editFileContent(fileId, newContent, newFileName, newOwnerId = nul
             console.error('Error editing file:', result.message);
         }
 
+        window.location.reload();
         return result;
     } catch (error) {
         console.error('An unexpected error occurred:', error);
@@ -233,6 +235,53 @@ function highlightElement(element, userId) {
         element.style.border = '';
         element.title = '';
     }, 1000);
+}
+
+function logUserIn() {
+    // First save everything
+    if (isOwningUser === 1) {
+        nameForm2 = document.getElementById('NameForm');
+        editFileContent(fileId, JSON.stringify(calculator.getState()), nameForm2.value);
+    } else {
+        nameTxt2 = document.getElementById('NameTxt');
+        editFileContent(fileId, JSON.stringify(calculator.getState()), nameTxt2.textContent);
+    }
+
+    window.location.href = `/login/render-login?file_id=${fileId}`;
+
+}
+
+async function logUserOut() {
+    // First save everything
+    if (isOwningUser === 1) {
+        nameForm2 = document.getElementById('NameForm');
+        editFileContent(fileId, JSON.stringify(calculator.getState()), nameForm2.value);
+    } else {
+        nameTxt2 = document.getElementById('NameTxt');
+        editFileContent(fileId, JSON.stringify(calculator.getState()), nameTxt2.textContent);
+    }
+
+    const payload = {
+        user_id: userId
+    };
+
+    fetch('/logout/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Logged out!')
+        window.location.href = `/user-dashboard/`
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+
+    
 }
 
 // -----------------------------------------------------------------------
@@ -250,6 +299,7 @@ const contentScript = document.getElementById('content-data');
 const content = JSON.parse(contentScript.textContent);
 
 const fileId = parseInt(document.getElementById("file-id").textContent, 10);
+console.log(fileId); // giving NaN
 const userId = parseInt(document.getElementById("user-id").textContent, 10);
 
 const userScript = document.getElementById('user-name');
@@ -312,6 +362,7 @@ if (isOwningUser === 1) {
     nameForm.style.fontFamily = 'Arial, sans-serif';
     nameForm.style.fontSize = '18px';
     nameForm.setAttribute('spellcheck', 'false');
+    nameForm.id = 'NameForm';
 
     function adjustInputWidth() {
         const charWidth = 10;
@@ -345,6 +396,7 @@ if (isOwningUser === 1) {
     const nameTxt = document.createElement('p');
     nameTxt.textContent = fileName;
     nameTxt.style.width = '75px'
+    nameTxt.id = 'NameTxt';
     header.appendChild(nameTxt);
     saveButton.onclick = () => editFileContent(fileId, JSON.stringify(calculator.getState()), nameTxt.textContent);
 }
@@ -437,6 +489,7 @@ if (userName === "BAD_USERNAME_#$&^%") {
     userNameContainer.style.borderRadius = '10px';
     userNameContainer.style.cursor = 'pointer';
     const savePopup2 = document.createElement('div');
+    userNameContainer.onclick = () => logUserIn();
     userNameContainer.addEventListener('mouseenter', () => {
         const userButtonRect = userNameContainer.getBoundingClientRect(); 
         userNameContainer.style.backgroundColor = '#AAA';
@@ -449,7 +502,7 @@ if (userName === "BAD_USERNAME_#$&^%") {
         savePopup2.style.height = '28px';
         savePopup2.style.borderRadius = '7px';
         savePopup2.style.backgroundColor = '#000';
-        savePopup2.innerText = 'Log In';
+        savePopup2.innerText = 'log in';
         savePopup2.style.color = '#FFF';
         savePopup2.style.fontSize = '14px';
         savePopup2.style.display = 'flex';
@@ -486,6 +539,65 @@ if (userName === "BAD_USERNAME_#$&^%") {
 
 
 } else {
+    rightArrow = document.createElement('i');
+    rightArrow.classList.add('fas', 'fa-arrow-right');
+    userNameContainer.appendChild(rightArrow);
+    userNameContainer.style.width = '40px';
+    userNameContainer.style.height = '40px';
+    userNameContainer.style.color = '#AAA';
+    userNameContainer.style.display = 'flex';
+    userNameContainer.style.alignItems = 'center';
+    userNameContainer.style.justifyContent = 'center';
+    userNameContainer.style.borderRadius = '10px';
+    userNameContainer.style.cursor = 'pointer';
+    const savePopup2 = document.createElement('div');
+    userNameContainer.onclick = () => logUserOut();
+    userNameContainer.addEventListener('mouseenter', () => {
+        const userButtonRect = userNameContainer.getBoundingClientRect(); 
+        userNameContainer.style.backgroundColor = '#AAA';
+        userNameContainer.style.color = '#444';
+        savePopup2.style.position = 'absolute';
+        savePopup2.style.top = `${userButtonRect.top + 48}px`;
+        
+        savePopup2.style.left = `${userButtonRect.left - 10}px`;
+        savePopup2.style.width = '60px';
+        savePopup2.style.height = '28px';
+        savePopup2.style.borderRadius = '7px';
+        savePopup2.style.backgroundColor = '#000';
+        savePopup2.innerText = 'log out';
+        savePopup2.style.color = '#FFF';
+        savePopup2.style.fontSize = '14px';
+        savePopup2.style.display = 'flex';
+        savePopup2.style.alignItems = 'center';
+        savePopup2.style.fontFamily = 'Arial, sans-serif';
+        savePopup2.style.justifyContent = 'center';
+        
+        const triangle2 = document.createElement('div');
+        triangle2.style.position = 'absolute';
+        triangle2.style.width = '0';
+        triangle2.style.height = '0';
+        triangle2.style.borderLeft = '5px solid transparent';
+        triangle2.style.borderRight = '5px solid transparent';
+        triangle2.style.borderBottom = '5px solid #000';
+        triangle2.style.top = '-5px';
+        triangle2.style.left = '50%';
+        triangle2.style.transform = 'translateX(-50%)';
+        document.body.appendChild(savePopup2);
+        savePopup2.appendChild(triangle2);
+    });
+
+    userNameContainer.addEventListener("mousedown", () => {
+        userNameContainer.style.backgroundColor = '#FFF';
+    });
+    userNameContainer.addEventListener("mouseup", () => {
+        userNameContainer.style.backgroundColor = '#AAA';
+    });
+
+    userNameContainer.addEventListener('mouseleave', () => {
+        userNameContainer.style.backgroundColor = "";
+        userNameContainer.style.color = "#AAA";
+        setTimeout(() =>{document.body.removeChild(savePopup2)}, 0);
+    });
 
 }
 header.appendChild(userNameContainer);
@@ -515,7 +627,7 @@ calculator.observeEvent("change", () => {
         isUserTyping = false; // User has stopped typing
         console.log("User stopped typing");
         emitStateUpdate(); // Emit the state after typing stops
-    }, 500); // Debounce delay (adjust as needed)
+    }, 1000); // Debounce delay (adjust as needed)
 });
 
 // Monitor calculator state for changes and emit them

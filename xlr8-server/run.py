@@ -1,7 +1,7 @@
 from app import create_app, db
 import requests
 import config
-from flask import g, session, request, render_template
+from flask import g, session, request, render_template, send_from_directory
 from app.models import *
 from flask_socketio import SocketIO, join_room, emit, leave_room
 import secrets
@@ -11,6 +11,10 @@ import threading
 app = create_app(config.TestingConfig)
 
 socketio = SocketIO(app, cors_allowed_origins="*")
+
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory('static', 'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
 
 @app.route('/debug-session')

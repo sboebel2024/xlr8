@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='favicon-16x16.png') }}">
+    <link rel="manifest" href="{{ url_for('static', filename='site.webmanifest') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Dashboard</title>
@@ -12,39 +17,10 @@
     <script id="user-name" type="application/json">
         {{ userName | tojson | safe }}
     </script>
+    <script id="user-id" type="application/json">
+        {{ userId | safe }}
+    </script>
     <style src="{{ url_for('static', filename='css/user-dashboard-styles.css')}}" defer ></style>
     <script src="{{ url_for('static', filename='js/src/user_dashboard.js') }}" defer></script>
 </body>
 </html>
-
-
-<!-- <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebSocket Test</title>
-    <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
-</head>
-<body>
-    <h1>WebSocket Test</h1>
-    <button id="testButton">Test WebSocket</button>
-    <div id="output"></div>
-
-    <script>
-        // Connect to the WebSocket server
-        const socket = io('http://localhost:5000');
-
-        // Handle button click to emit a test event
-        document.getElementById('testButton').addEventListener('click', () => {
-            socket.emit('test_event', { message: 'Hello from the client!' });
-        });
-
-        // Listen for the server's response
-        socket.on('test_response', (data) => {
-            console.log(data);
-            document.getElementById('output').innerText = data.message;
-        });
-    </script>
-</body>
-</html> -->

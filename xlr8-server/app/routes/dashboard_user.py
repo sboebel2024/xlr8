@@ -51,10 +51,10 @@ def render_site():
             print(f"Temp User ID: {tempUser.id}")
             
         print(f"Temp User ID: {tempUser.id}")
-        return render_template('user_dashboard.html', userName = 'None')
+        return render_template('user_dashboard.html', userName = 'None', userId=None)
 
     print(f"Session User ID: {user.id}")
-    return render_template('user_dashboard.html', userName = f"{user.firstName} {user.lastName}")
+    return render_template('user_dashboard.html', userName = f"{user.firstName}", userId=user.id)
 
 @user_dashboard_bp.route('/debug', methods=['GET'])
 def debug():
@@ -158,7 +158,7 @@ def access_file():
         userFname = str("BAD_USERNAME_#$&^%")
         pan_userid = tempUser.id
 
-
+    print(file_id)
     file = File.query.get(file_id)
     if not file:
         return jsonify({"status": "NOK", "message": "File not found"}), 404
@@ -197,7 +197,7 @@ def access_file():
 
         
         
-        return render_template(template_to_run, content=content, fileid=file_id, filename=fileName, isOwningUser=isOwningUser, userFname=userFname, userid = pan_userid )
+        return render_template(template_to_run, content=content, file_id=file_id, filename=fileName, isOwningUser=isOwningUser, userFname=userFname, userid = pan_userid )
 
     return jsonify({
         "status": "NOK", 
@@ -386,3 +386,22 @@ def delete_file():
             db.session.rollback()   
             return jsonify({"status":"NOK", "message": f"Error deleting file: {e}"})
 
+
+@user_dashboard_bp.route('/add-user-to-file', methods=['POST'])
+def add_user_to_file():
+    data = request.get_json()
+    file_id = data['file_id']
+    user_id = data['user_id']
+
+    user = User.query.get(user_id)
+    file = File.query.get(file_id)
+    
+    if (not user) or (not file):
+        return jsonify({'status': 'NOK', 'message': 'File or User not found'}), 404
+    
+    file.users.append(user)
+
+    return jsonify({'status': 'OK', 'message': f'User {user.firstName} added to file {file.fileName}.'}), 200
+
+
+    
