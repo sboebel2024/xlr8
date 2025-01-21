@@ -95,18 +95,18 @@ def get_file_data():
 
     
         if isCards:
-            recent_files = (
-                # db.session.query(File)
-                # .join(FileAccessLog, File.id == FileAccessLog.file_id)
-                # .filter(or_(
-                #     FileAccessLog.user_id == user_id,
-                #     request.remote_addr == tempUser.ip_addr
-                # ))  #.filter(user in File.users) <-- Make this handle user not existing; i.e. make files "public" or "private"
-                # .order_by(FileAccessLog.accessed_at.desc())
-                # .limit(20)
-                # .all()
-                db.session.query(File).all()
-            )
+            if user and (not tempUser):
+                recent_files = (
+                    db.session.query(File).filter(File.users.any(User.id == user.id)).all()
+                )
+            if (not user) and tempUser:
+                recent_files = (
+                    db.session.query(File).filter(File.tempUsers.any(TempUser.id == tempUser.id)).all()
+                )
+
+            else:
+                print('No user or tempuser. Issue!')
+
             return jsonify({
                 "status": "OK",
                 "recent_files": [
@@ -203,7 +203,7 @@ def access_file():
             else:
                 isOwningUser = 0
 
-        
+        print(f"File ID: {file_id}")
         
         return render_template(template_to_run, content=content, file_id=file_id, filename=fileName, isOwningUser=isOwningUser, userFname=userFname, userid = pan_userid )
 
@@ -239,7 +239,7 @@ def edit_file():
             ip = request.remote_addr
             tempUser = TempUser.query.filter(TempUser.ip_addr == ip).first()
             if not tempUser:
-                register_temp_user(ip)
+                tempUser = register_temp_user(ip)
                 
     file_id = data['file_id']
     file = File.query.get(file_id)
@@ -302,6 +302,8 @@ def create_file():
 
     """
 
+    tempUser = None
+
 
     try: 
         data = request.get_json()
@@ -312,11 +314,13 @@ def create_file():
         
         user_id = session.get('user_id')  # Get the logged-in user's ID from the session
 
-        if not user_id:
+        user = User.query.get(user_id)
+
+        if not user:
             ip = request.remote_addr
             tempUser = TempUser.query.filter(TempUser.ip_addr == ip).first()
             if not tempUser:
-                register_temp_user(ip)
+                tempUser = register_temp_user(ip)
                     
 
         file_name = data['fileName']
@@ -338,13 +342,21 @@ def create_file():
         if image:
             file.image = image
 
-        if user_id:
-            user = User.query.get(user_id)
-            if user:
-                file.owning_user_id = user_id
-                file.users.append(user)  # Assign the current user to the file
-            else:
-                file.owning_user_id = None
+        Id = None
+
+        if user:
+            print('Here 1')
+            file.owning_user_id = user_id
+            file.users.append(user)  # Assign the current user to the file
+            Id = user_id
+
+        print('Here 2')
+
+        if (not user):
+            print('Here 3')
+            file.owning_user_id = None
+            file.tempUsers.append(tempUser)
+            Id = tempUser.id
 
 
         # Commit to the database
@@ -365,10 +377,11 @@ def create_file():
                 "id": file.id,
                 "name": file.fileName,
                 "extension": file.ext,
+                "userid": Id
             }
         }), 201
     except Exception as e:
-        app.logger.error(f"Error in create_file route: {str(e)}", exc_info=True)
+        print(f"Error in create_file route: {str(e)}", exc_info=True)
         db.session.rollback()
         return jsonify({"status": "NOK", "message": f"Internal server error: {e}"}), 500
 

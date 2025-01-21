@@ -1,6 +1,8 @@
 from app import db
 from datetime import datetime, timezone
 from sqlalchemy.orm import validates
+import uuid
+from sqlalchemy import String
 
 # Utility function
 def register_temp_user(ip):
@@ -16,34 +18,40 @@ def load_des_image():
 # Association tables
 managed_users_table = db.Table(
     'managed_users',
-    db.Column('manager_id', db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), primary_key=True),
-    db.Column('employee_id', db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), primary_key=True)
+    db.Column('manager_id', String(36), db.ForeignKey('users.id', ondelete='CASCADE'), primary_key=True),
+    db.Column('employee_id', String(36), db.ForeignKey('users.id', ondelete='CASCADE'), primary_key=True)
 )
 
 user_org_table = db.Table(
     'user_org',
-    db.Column('user_id', db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), primary_key=True),
+    db.Column('user_id', String(36), db.ForeignKey('users.id', ondelete='CASCADE'), primary_key=True),
     db.Column('org_id', db.Integer, db.ForeignKey('orgs.id', ondelete='CASCADE'), primary_key=True)
 )
 
 user_file_table = db.Table(
     'user_file',
-    db.Column('user_id', db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), primary_key=True),
-    db.Column('file_id', db.Integer, db.ForeignKey('files.id', ondelete='CASCADE'), primary_key=True),
+    db.Column('user_id', String(36), db.ForeignKey('users.id', ondelete='CASCADE'), primary_key=True),
+    db.Column('file_id', String(36), db.ForeignKey('files.id', ondelete='CASCADE'), primary_key=True),
     db.Column('local_path', db.String(255))
 )
 
 file_orgs_table = db.Table(
     'file_org',
     db.Column('org_id', db.Integer, db.ForeignKey('orgs.id', ondelete='CASCADE'), primary_key=True),
-    db.Column('file_id', db.Integer, db.ForeignKey('files.id', ondelete='CASCADE'), primary_key=True)
+    db.Column('file_id', String(36), db.ForeignKey('files.id', ondelete='CASCADE'), primary_key=True)
+)
+
+temp_file_table = db.Table(
+    'temp_file',
+    db.Column('user_id', db.Integer, db.ForeignKey('tempusers.id', ondelete='CASCADE'), primary_key=True),
+    db.Column('file_id', String(36), db.ForeignKey('files.id', ondelete='CASCADE'), primary_key=True),
 )
 
 # User model
 class User(db.Model):
     __tablename__ = 'users'
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     username = db.Column(db.String(50), nullable=False, unique=True)
     firstName = db.Column(db.String(50), nullable=False)
     lastName = db.Column(db.String(50), nullable=False)
@@ -83,7 +91,7 @@ class TempUser(db.Model):
 class File(db.Model):
     __tablename__ = 'files'
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     fileName = db.Column(db.String(50), nullable=False)
     path = db.Column(db.String(255), nullable=True)
     ext = db.Column(db.String(50), nullable=False)
@@ -91,15 +99,15 @@ class File(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc), nullable=False)
     content = db.Column(db.Text, nullable=False)
     
-    owning_user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'))
+    owning_user_id = db.Column(String(36), db.ForeignKey('users.id', ondelete='SET NULL'))
     orgs = db.relationship('Org', secondary=file_orgs_table, back_populates='files')
     users = db.relationship('User', secondary=user_file_table, backref='files')
+    tempUsers = db.relationship('TempUser', secondary = temp_file_table, backref='files')
 
     image = db.Column(db.LargeBinary, nullable=True)
 
     @validates('ext')
     def validate_ext(self, key, ext_value):
-        # Automatically assign the image if the file has a "des" extension
         if ext_value == "des" and not self.image:
             self.image = load_des_image()
         return ext_value
@@ -116,7 +124,7 @@ class Org(db.Model):
     orgName = db.Column(db.String(50), nullable=False, unique=True)
     users = db.relationship('User', secondary=user_org_table, back_populates='orgs')
     files = db.relationship('File', secondary=file_orgs_table, back_populates='orgs')
-    signing_user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
+    signing_user_id = db.Column(String(36), db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
     signing_user = db.relationship('User', foreign_keys=[signing_user_id])
 
 # FileAccessLog model
@@ -124,9 +132,9 @@ class FileAccessLog(db.Model):
     __tablename__ = 'file_access_logs'
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=True)
+    user_id = db.Column(String(36), db.ForeignKey('users.id', ondelete='CASCADE'), nullable=True)
     temp_user_id = db.Column(db.Integer, db.ForeignKey('tempusers.id', ondelete='CASCADE'), nullable=True)
-    file_id = db.Column(db.Integer, db.ForeignKey('files.id', ondelete='CASCADE'), nullable=True)
+    file_id = db.Column(String(36), db.ForeignKey('files.id', ondelete='CASCADE'), nullable=True)
     accessed_at = db.Column(db.DateTime, default=datetime.now(timezone.utc), nullable=False)
 
     user = db.relationship('User', backref='file_access_logs')

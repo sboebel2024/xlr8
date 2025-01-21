@@ -298,9 +298,12 @@ html.style.height = '100%';
 const contentScript = document.getElementById('content-data');
 const content = JSON.parse(contentScript.textContent);
 
-const fileId = parseInt(document.getElementById("file-id").textContent, 10);
+const fileIdScript = document.getElementById('file-id');
+const fileId = JSON.parse(fileIdScript.textContent);
 console.log(fileId); // giving NaN
-const userId = parseInt(document.getElementById("user-id").textContent, 10);
+
+const userIdScript = document.getElementById('user-id');
+const userId = JSON.parse(userIdScript.textContent);
 
 const userScript = document.getElementById('user-name');
 const userName = JSON.parse(userScript.textContent)

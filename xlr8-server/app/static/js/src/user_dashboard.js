@@ -147,6 +147,19 @@ function link_to_file(file_id) {
     window.location.href = `/user-dashboard/access-file?file_id=${file_id}`;
 }
 
+async function copyLink(file_id) {
+    const link = `http://xlr8.online/user-dashboard/access-file?file_id=${file_id}`;
+
+    navigator.clipboard.writeText(link)
+        .then(() => {
+            const popup = document.getElementById('lnkPopup');
+            popup.innerText = 'Link copied!';
+        })
+        .catch(err => {
+            console.error('Failed to copy: ', err); 
+        });
+}
+
 function renderFileList(files) {
     if (files === null) {
         renderContainer.innerHTML = '';
@@ -191,14 +204,14 @@ function renderFileList(files) {
             image.classList.add("file-image");
             image.style.width = '130px';
             image.style.height = '130px';
-            image.style.marginTop = '20px';
+            image.style.marginTop = '15px';
             
             const infoContainer = document.createElement('div');
             infoContainer.style.fontFamily = 'Arial, sans-serif';
             infoContainer.style.fontSize = '14px';
             infoContainer.style.fontWeight = 'bold';
             infoContainer.style.width = '150px';
-            infoContainer.style.height = '75px';
+            infoContainer.style.height = '65px';
             infoContainer.style.display = 'flex';
             infoContainer.style.alignItems = 'center';
             infoContainer.style.maxWidth = '150px';
@@ -227,24 +240,103 @@ function renderFileList(files) {
 
             const xIco = document.createElement('i');
             xIco.classList.add('fas', 'fa-times');
-            
 
+            const lnkButton = document.createElement('button');
+            lnkButton.style.all = 'unset';
+            lnkButton.style.marginLeft = '10px';
+            lnkButton.style.width = '20px';
+            lnkButton.style.height = '20px';
+            lnkButton.style.borderRadius = '5px';
+            lnkButton.style.display = 'flex';
+            lnkButton.style.justifyContent = 'center';
+            lnkButton.style.alignItems = 'center';
+            const savePopup3 = document.createElement('div');
+            lnkButton.addEventListener('mouseenter', () => {
+                lnkButton.style.backgroundColor = '#AAA';
+                const lnkButtonRect = lnkButton.getBoundingClientRect();
+                listItem.onclick = "";
+                savePopup3.style.position = 'absolute';
+                savePopup3.style.top = `${lnkButtonRect.top + 30}px`;
+                
+                savePopup3.style.left = `${lnkButtonRect.left - 45}px`;
+                savePopup3.style.width = '110px';
+                savePopup3.style.height = '28px';
+                savePopup3.style.borderRadius = '7px';
+                savePopup3.style.backgroundColor = '#000';
+                savePopup3.innerText = 'copy share link';
+                savePopup3.style.color = '#FFF';
+                savePopup3.style.fontSize = '14px';
+                savePopup3.style.display = 'flex';
+                savePopup3.style.alignItems = 'center';
+                savePopup3.style.fontFamily = 'Arial, sans-serif';
+                savePopup3.style.justifyContent = 'center';
+                savePopup3.id = 'lnkPopup';
+                
+                const triangle3 = document.createElement('div');
+                triangle3.style.position = 'absolute';
+                triangle3.style.width = '0';
+                triangle3.style.height = '0';
+                triangle3.style.borderLeft = '5px solid transparent';
+                triangle3.style.borderRight = '5px solid transparent';
+                triangle3.style.borderBottom = '5px solid #000';
+                triangle3.style.top = '-5px';
+                triangle3.style.left = '50%';
+                triangle3.style.transform = 'translateX(-50%)';
+                document.body.appendChild(savePopup3);
+                savePopup3.appendChild(triangle3);
+            });
+            lnkButton.addEventListener("mousedown", () => {
+                lnkButton.style.backgroundColor = '#FFF';
+            });
+            lnkButton.addEventListener("mouseup", () => {
+                lnkButton.style.backgroundColor = '#AAA';
+            });
+            lnkButton.addEventListener('mouseleave', () => {
+                lnkButton.style.backgroundColor = '';
+                listItem.onclick = () => link_to_file(file.id);
+                document.body.removeChild(savePopup3);
+            });
+
+            lnkButton.onclick = () => copyLink(file.id);
+
+            lnkIco = document.createElement('i');
+            lnkIco.classList.add('fas', 'fa-share');
+            lnkButton.appendChild(lnkIco);
+            
+            
+            
+            
             const name = document.createElement('p');
             name.textContent = file.name;
             name.classList.add("file-name");
 
-            // const owner = document.createElement("p");
-            // owner.textContent = `${file.owner}`;
-            // if (`${file.owner}` === 'None' ) {
-            //     owner.textContent = `public`
-            // }
-            // owner.classList.add("file-owner");
+            const infoContainer2 = document.createElement('div');
+            infoContainer2.style.fontFamily = 'Arial, sans-serif';
+            infoContainer2.style.fontSize = '14px';
+            infoContainer2.style.fontWeight = 'bold';
+            infoContainer2.style.width = '150px';
+            infoContainer2.style.height = '65px';
+            infoContainer2.style.display = 'flex';
+            infoContainer2.style.alignItems = 'center';
+            infoContainer2.style.maxWidth = '150px';
+            infoContainer2.style.justifyContent = 'center';
+            infoContainer2.style.maxHeight = '25px';
+
+            const owner = document.createElement("p");
+            owner.textContent = `Owner: ${file.owner}`;
+            if (`${file.owner}` === 'None' ) {
+                owner.textContent = `Owner: Temp`
+            }
+            owner.classList.add("file-owner");
 
             listItem.appendChild(image);
             infoContainer.appendChild(name);
             infoContainer.appendChild(xButton);
+            infoContainer2.appendChild(owner);
+            infoContainer2.appendChild(lnkButton);
             xButton.appendChild(xIco);
             listItem.appendChild(infoContainer);
+            listItem.appendChild(infoContainer2);
             renderContainer.appendChild(listItem);
         });
     }
@@ -304,7 +396,8 @@ function logUserIn() {
 
 async function logUserOut() {
 
-    const userId = parseInt(document.getElementById("user-id").textContent, 10);
+    const userIdScript = document.getElementById('user-id');
+    const userId = JSON.parse(userIdScript.textContent);
 
     const payload = {
         user_id: userId
@@ -507,7 +600,6 @@ if (user_name === "None") {
         userNameContainer.style.color = '#444';
         savePopup2.style.position = 'absolute';
         savePopup2.style.top = `${userButtonRect.top + 48}px`;
-        
         savePopup2.style.left = `${userButtonRect.left + 2}px`;
         savePopup2.style.width = '60px';
         savePopup2.style.height = '28px';
