@@ -5,6 +5,7 @@ import app
 import requests
 from sqlalchemy import or_
 from flask_socketio import SocketIO, join_room, leave_room, emit
+import base64
 
 
 user_dashboard_bp = Blueprint('user_dashboard', __name__)
@@ -109,7 +110,12 @@ def get_file_data():
             return jsonify({
                 "status": "OK",
                 "recent_files": [
-                    {"id": file.id, "name": file.fileName, "owner": f"{file.owning_user.firstName if file.owning_user_id is not None else None}", "image": file.image}
+                    {
+                        "id": file.id, 
+                        "name": file.fileName, 
+                        "owner": f"{file.owning_user.firstName if file.owning_user_id is not None else None}", 
+                        "image": base64.b64encode(file.image).decode('utf-8') if file.image else None
+                    }
                     for file in recent_files
                 ]
             }), 200
@@ -169,10 +175,12 @@ def access_file():
 
     if user_id:
         user = User.query.get(user_id)
+         
         if user:
             userFname = str(user.firstName)
             pan_userid = user_id
         if not user: 
+            ip = request.remote_addr
             tempUser = register_temp_user(ip)
             print(f"Temp User ID: {tempUser.id}")
             userFname = str("Not Logged in!")

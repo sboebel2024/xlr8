@@ -27,6 +27,11 @@
         style="padding: 10px 20px; border: none; background-color: #007bff; color: white; border-radius: 4px; cursor: pointer;">
         Login
     </button>
+    <br><br>
+    <button id="signupButton" 
+        style="padding: 10px 20px; border: none; color: black; border-radius: 4px; cursor: pointer;">
+        Don't have an account? Sign up!
+    </button>
 
     <p id="message" style="margin-top: 20px; font-weight: bold; color: red;"></p>
 
@@ -121,6 +126,9 @@
             if (event.key === 'Enter') {
                 log_in();
             }
+        });
+        document.getElementById('signupButton').addEventListener('click', function () {
+            window.location.href = '/signup/render-signup'
         });
     </script>
 

@@ -1,0 +1,182 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>xlr8 / signup</title>
+</head>
+<body>
+    <div id="signup-container"></div>
+
+    <script>
+        // Create signup container
+        const container = document.getElementById("signup-container");
+        container.style.overflowY = "auto";
+        container.style.maxHeight = "100%";
+        container.style.marginTop = '60px';
+
+        // Apply font styling globally
+        document.body.style.fontFamily = "Arial, sans-serif";
+        document.body.style.margin = "0";
+        document.body.style.padding = "0";
+        document.body.style.backgroundColor = "#fff";
+        document.body.style.display = "flex";
+        document.body.style.justifyContent = "center";
+        document.body.style.alignItems = "center";
+        document.body.style.height = "100vh";
+        document.body.style.overflowY = "auto";  // Ensure vertical scrolling is enabled
+        document.body.style.height = "auto";  // Allow full content height
+        document.body.style.margin = "0";
+        document.body.style.padding = "0";
+
+
+        // Create heading
+        const heading = document.createElement("h1");
+        heading.innerText = "xlr8 / signup";
+        heading.style.textAlign = "center";
+        heading.style.fontSize = "24px";
+        heading.style.fontWeight = "bold";
+        heading.style.marginBottom = "20px";
+
+        container.appendChild(heading);
+
+        // Create the form
+        const form = document.createElement("form");
+        form.id = "signupForm";
+        form.style.maxWidth = "350px";
+        form.style.margin = "auto";
+        form.style.backgroundColor = "#fff";
+        form.style.padding = '40px';
+        form.style.paddingTop = "20px";
+
+        form.style.borderRadius = "8px";
+        form.style.textAlign = "center";
+        form.style.fontFamily = "Arial, sans-serif";
+
+        // Function to create input fields
+        function createInputField(labelText, inputType, inputId, placeholderText) {
+            const label = document.createElement("label");
+            label.innerText = labelText;
+            label.style.display = "block";
+            label.style.fontWeight = "bold";
+            label.style.marginBottom = "5px";
+            label.style.textAlign = "left";
+            label.style.fontFamily = "Arial, sans-serif";
+
+            const input = document.createElement("input");
+            input.type = inputType;
+            input.id = inputId;
+            input.placeholder = placeholderText;
+            input.style.width = "100%";
+            input.style.padding = "10px";
+            input.style.marginBottom = "15px";
+            input.style.border = "1px solid #ccc";
+            input.style.borderRadius = "5px";
+            input.style.fontSize = "14px";
+            input.style.fontFamily = "Arial, sans-serif";
+
+            form.appendChild(label);
+            form.appendChild(input);
+        }
+
+        createInputField("Username:", "text", "username", "Enter your username");
+        createInputField("First Name:", "text", "firstName", "Enter your first name");
+        createInputField("Last Name:", "text", "lastName", "Enter your last name");
+        createInputField("Email:", "email", "email", "Enter your email");
+        createInputField("Password:", "password", "password", "Enter your password");
+        createInputField("Phone Number:", "tel", "phoneNumber", "Enter your phone number");
+        createInputField("Birthday:", "date", "birthday", "");
+
+        // Function to create checkboxes
+        function createCheckbox(labelText, checkboxId) {
+            const checkboxLabel = document.createElement("label");
+            checkboxLabel.style.display = "block";
+            checkboxLabel.style.marginBottom = "15px";
+            checkboxLabel.style.textAlign = "left";
+            checkboxLabel.style.fontFamily = "Arial, sans-serif";
+
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.id = checkboxId;
+            checkbox.style.marginRight = "10px";
+
+            checkboxLabel.appendChild(checkbox);
+            checkboxLabel.appendChild(document.createTextNode(labelText));
+            form.appendChild(checkboxLabel);
+        }
+
+
+        // Signup button
+        const signupButton = document.createElement("button");
+        signupButton.type = "submit";
+        signupButton.innerText = "Sign Up";
+        signupButton.style.width = "100%";
+        signupButton.style.padding = "12px";
+        signupButton.style.fontSize = "16px";
+        signupButton.style.backgroundColor = "#007bff";
+        signupButton.style.border = "none";
+        signupButton.style.color = "#fff";
+        signupButton.style.borderRadius = "5px";
+        signupButton.style.cursor = "pointer";
+        signupButton.style.transition = "background 0.3s";
+        signupButton.style.fontFamily = "Arial, sans-serif";
+
+        signupButton.onmouseover = function () {
+            signupButton.style.backgroundColor = "#0056b3";
+        };
+        signupButton.onmouseout = function () {
+            signupButton.style.backgroundColor = "#007bff";
+        };
+
+        form.appendChild(signupButton);
+
+        // Response message div
+        const responseMessage = document.createElement("div");
+        responseMessage.id = "responseMessage";
+        responseMessage.style.marginTop = "10px";
+        responseMessage.style.fontSize = "16px";
+        responseMessage.style.color = "#333";
+        responseMessage.style.textAlign = "center";
+        responseMessage.style.fontFamily = "Arial, sans-serif";
+        form.appendChild(responseMessage);
+
+        // Append form to container
+        container.appendChild(form);
+
+        // Handle form submission
+        form.addEventListener("submit", async function (event) {
+            event.preventDefault();
+
+            const formData = {
+                username: document.getElementById('username').value,
+                firstName: document.getElementById('firstName').value,
+                lastName: document.getElementById('lastName').value,
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value,
+                phoneNumber: document.getElementById('phoneNumber').value,
+                birthday: document.getElementById('birthday').value,
+                isOrg: 'False',
+                joiningOrg: "False",
+                orgName: "False",
+            };
+
+            responseMessage.innerText = "Processing...";
+            responseMessage.style.color = "blue";
+
+            const response = await fetch('/signup/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
+
+            const result = await response.json();
+            responseMessage.innerText = result.message;
+            responseMessage.style.color = response.ok ? "green" : "red";
+            if (response.ok) {
+                window.location.href = '/user-dashboard/';
+            }
+        });
+    </script>
+</body>
+</html>

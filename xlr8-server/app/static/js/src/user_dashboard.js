@@ -156,40 +156,95 @@ function renderFileList(files) {
 
         files.forEach(file => {
         
-            const listItem = document.createElement('div');
+            const listItem = document.createElement('button');
+            listItem.style.all = 'unset';
+            listItem.onclick = () => link_to_file(file.id);
+            listItem.style.cursor = 'pointer';
+            listItem.style.marginLeft = '10px';
+            listItem.style.marginTop = '10px';
+
             listItem.classList.add("file-item");
+            listItem.style.width = '200px';
+            listItem.style.height = '200px';
+            listItem.style.borderColor = '#444';
+            listItem.style.borderRadius = '20px';
+            listItem.style.boxShadow = '4px 4px 10px rgba(0,0,0,0.3)';
+            listItem.addEventListener('mouseenter', () => {
+                listItem.style.boxShadow = '4px 4px 10px rgba(0,0,0,0.6)';
+            });
+            listItem.addEventListener('mouseleave', () => {
+                listItem.style.boxShadow = '4px 4px 10px rgba(0,0,0,0.3)';
+            });
+            
+            listItem.style.display = 'flex';
+            listItem.style.flexDirection = 'column';
+            listItem.style.alignItems = 'center';
 
             const image = document.createElement("img");
-            image.src = file.image;
+            if (file.image) {
+                image.src = `data:image/png;base64,${file.image}`;
+            } else {
+                image.src = "path/to/default-placeholder.png";  // Provide a fallback image
+            }
+            
             image.alt = `${file.name} thumbnail`;
-            image.classList.add("file-image")
-            image.style.width = '50px';
-            image.style.height = '50px';
+            image.classList.add("file-image");
+            image.style.width = '130px';
+            image.style.height = '130px';
+            image.style.marginTop = '20px';
+            
+            const infoContainer = document.createElement('div');
+            infoContainer.style.fontFamily = 'Arial, sans-serif';
+            infoContainer.style.fontSize = '14px';
+            infoContainer.style.fontWeight = 'bold';
+            infoContainer.style.width = '150px';
+            infoContainer.style.height = '75px';
+            infoContainer.style.display = 'flex';
+            infoContainer.style.alignItems = 'center';
+            infoContainer.style.maxWidth = '150px';
+            infoContainer.style.justifyContent = 'center';
+            infoContainer.style.maxHeight = '25px';
+
+            const xButton = document.createElement('button');
+            xButton.style.all = 'unset';
+            xButton.style.marginLeft = '10px';
+            xButton.style.width = '20px';
+            xButton.style.height = '20px';
+            xButton.style.borderRadius = '5px';
+            xButton.style.display = 'flex';
+            xButton.style.justifyContent = 'center';
+            xButton.style.alignItems = 'center';
+            xButton.addEventListener('mouseenter', () => {
+                xButton.style.backgroundColor = '#AAA';
+                listItem.onclick = "";
+            });
+            xButton.addEventListener('mouseleave', () => {
+                xButton.style.backgroundColor = '';
+                listItem.onclick = () => link_to_file(file.id);
+            });
+            xButton.onclick = () => delete_file(file.id);
+
+
+            const xIco = document.createElement('i');
+            xIco.classList.add('fas', 'fa-times');
+            
 
             const name = document.createElement('p');
             name.textContent = file.name;
             name.classList.add("file-name");
 
-            const owner = document.createElement("p");
-            owner.textContent = `Owner: ${file.owner}`;
-            if (`${file.owner}` === 'None' ) {
-                owner.textContent = `Owner: Public`
-            }
-            owner.classList.add("file-owner");
-
-            const linkButton = document.createElement("button");
-            linkButton.onclick = () => link_to_file(file.id);
-            linkButton.textContent = "Open";
-
-            const deleteButton = document.createElement('button');
-            deleteButton.onclick = () => delete_file(file.id);
-            deleteButton.textContent = "Delete"
+            // const owner = document.createElement("p");
+            // owner.textContent = `${file.owner}`;
+            // if (`${file.owner}` === 'None' ) {
+            //     owner.textContent = `public`
+            // }
+            // owner.classList.add("file-owner");
 
             listItem.appendChild(image);
-            listItem.appendChild(name);
-            listItem.appendChild(owner);
-            listItem.appendChild(linkButton);
-            listItem.appendChild(deleteButton);
+            infoContainer.appendChild(name);
+            infoContainer.appendChild(xButton);
+            xButton.appendChild(xIco);
+            listItem.appendChild(infoContainer);
             renderContainer.appendChild(listItem);
         });
     }
@@ -299,7 +354,11 @@ header.height = '100px';
 header.style.display = 'flex';
 header.style.alignItems = 'center';
 header.style.gap = '5px';
+//header.style.boxShadow = '0px 0px 0px 1px rgba(0,0,0,0.3)';
 main.appendChild(header);
+
+bar = document.createElement('div');
+
 
 const logo = document.createElement('div');
 logo.style.width = '35px';
@@ -326,13 +385,31 @@ pathLogo.style.fontWeight = 'bold';
 pathLogo.style.fontSize = '20px';
 header.appendChild(pathLogo);
 
+const title = document.createElement('div');
+title.style.height = '50px';
+title.innerText = 'dashboard';
+title.style.display = 'flex';
+title.style.alignItems = 'center';
+title.style.justifyContent = 'center';
+title.style.fontFamily = 'Arial, sans-serif';
+title.style.fontWeight = 'bold';
+title.style.fontSize = '20px';
+title.style.width = '100px';
+header.appendChild(title);
+
 const createContainer = document.createElement('div');
-    createContainer.innerHTML = "";
-    header.appendChild(createContainer);
+createContainer.innerHTML = "";
+header.appendChild(createContainer);
 
 const renderContainer = document.createElement('div');
-    renderContainer.innerHTML = "";
-    main.appendChild(renderContainer);
+renderContainer.innerHTML = "";
+renderContainer.style.display = 'flex';
+renderContainer.style.justifyContent = 'left';
+renderContainer.style.flexWrap = 'wrap';
+renderContainer.style.maxWidth = '100vh';
+
+main.appendChild(renderContainer);
+
 
 
 
