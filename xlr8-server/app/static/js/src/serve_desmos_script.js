@@ -237,8 +237,11 @@ function highlightElement(element, userId) {
     }, 1000);
 }
 
+var loggingIn = false;
+
 function logUserIn() {
     // First save everything
+    loggingIn = true;
     if (isOwningUser === 1) {
         nameForm2 = document.getElementById('NameForm');
         editFileContent(fileId, JSON.stringify(calculator.getState()), nameForm2.value);
@@ -281,7 +284,10 @@ async function logUserOut() {
         console.error('Error:', error);
     });
 
-    
+}
+
+function linkToDashboard() {
+    window.location.href = '/user-dashboard/'
 }
 
 // -----------------------------------------------------------------------
@@ -567,7 +573,7 @@ if (userName === "BAD_USERNAME_#$&^%") {
         savePopup2.style.height = '28px';
         savePopup2.style.borderRadius = '7px';
         savePopup2.style.backgroundColor = '#000';
-        savePopup2.innerText = 'log out';
+        savePopup2.innerText = 'Log Out';
         savePopup2.style.color = '#FFF';
         savePopup2.style.fontSize = '14px';
         savePopup2.style.display = 'flex';
@@ -605,15 +611,85 @@ if (userName === "BAD_USERNAME_#$&^%") {
 }
 header.appendChild(userNameContainer);
 
-const socket = io('http://localhost:5000');
+
+const dashboardButton = document.createElement('button');
+dashboardButton.style.all = 'unset';
+const leftArrow = document.createElement('i');
+leftArrow.classList.add('fas', 'fa-arrow-left');
+dashboardButton.appendChild(leftArrow);
+dashboardButton.style.width = '40px';
+dashboardButton.style.height = '40px';
+dashboardButton.style.color = '#AAA';
+dashboardButton.style.display = 'flex';
+dashboardButton.style.alignItems = 'center';
+dashboardButton.style.justifyContent = 'center';
+dashboardButton.style.borderRadius = '10px';
+dashboardButton.style.cursor = 'pointer';
+const dashboardPopup = document.createElement('div');
+dashboardButton.onclick = () => linkToDashboard();
+dashboardButton.addEventListener('mouseenter', () => {
+    const userButtonRect = dashboardButton.getBoundingClientRect(); 
+    dashboardButton.style.backgroundColor = '#AAA';
+    dashboardButton.style.color = '#444';
+    dashboardPopup.style.position = 'absolute';
+    dashboardPopup.style.top = `${userButtonRect.top + 48}px`;
+    
+    dashboardPopup.style.left = `${userButtonRect.left - 10}px`;
+    dashboardPopup.style.width = '60px';
+    dashboardPopup.style.height = '28px';
+    dashboardPopup.style.borderRadius = '7px';
+    dashboardPopup.style.backgroundColor = '#000';
+    dashboardPopup.innerText = 'dashboard';
+    dashboardPopup.style.color = '#FFF';
+    dashboardPopup.style.fontSize = '14px';
+    dashboardPopup.style.display = 'flex';
+    dashboardPopup.style.alignItems = 'center';
+    dashboardPopup.style.fontFamily = 'Arial, sans-serif';
+    dashboardPopup.style.justifyContent = 'center';
+    
+    const dashboardTriangle = document.createElement('div');
+    dashboardTriangle.style.position = 'absolute';
+    dashboardTriangle.style.width = '0';
+    dashboardTriangle.style.height = '0';
+    dashboardTriangle.style.borderLeft = '5px solid transparent';
+    dashboardTriangle.style.borderRight = '5px solid transparent';
+    dashboardTriangle.style.borderBottom = '5px solid #000';
+    dashboardTriangle.style.top = '-5px';
+    dashboardTriangle.style.left = '50%';
+    dashboardTriangle.style.transform = 'translateX(-50%)';
+    document.body.appendChild(dashboardPopup);
+    dashboardPopup.appendChild(dashboardTriangle);
+});
+
+dashboardButton.addEventListener("mousedown", () => {
+    dashboardButton.style.backgroundColor = '#FFF';
+});
+dashboardButton.addEventListener("mouseup", () => {
+    dashboardButton.style.backgroundColor = '#AAA';
+});
+
+dashboardButton.addEventListener('mouseleave', () => {
+    dashboardButton.style.backgroundColor = "";
+    dashboardButton.style.color = "#AAA";
+    setTimeout(() =>{document.body.removeChild(dashboardPopup)}, 0);
+});
+header.appendChild(dashboardButton)
+
+
+
+
+const socket = io('https://xlr8.online');
 console.log(`User ID: ${userId}, File ID: ${fileId}`);
 socket.emit('join', { file_id: fileId, user_id: `User${userId}` });
 
 socket.on('state_update', (data) => {
     console.log('Received state update:', data);
 
-    if (data.user_id === `User${userId}`) {
-        console.log('Ignoring self-originated update');
+    // if (data.user_id === `User${userId}`) {
+    //     console.log('Ignoring self-originated update');
+    //     return;
+    // }
+    if (loggingIn) {
         return;
     }
 

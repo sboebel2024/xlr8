@@ -1,5 +1,23 @@
+/*
+
+USER_DASHBOARD JAVASCRIPT SERVING FILE
+
+This is one of the big bad files with a lot of stuff
+that needs to get changed over to React. I will do my
+best to comment all of this!
+    ~Spencer
+
+*/
+
+// This is basically to change between cards and list.
+// It's probably a good idea to stick with cards so that
+// we don't have to write a new method to serve a list
+// renderer.
 const isCards = true;
 
+
+// This thing fetches the file data and returns a list of
+// files and attributes. 
 async function fetchFileData(isCards) {
     try {
         const requestData = {
@@ -27,6 +45,8 @@ async function fetchFileData(isCards) {
     }
 }
 
+// This is the function that gets called when we click
+// the "+" on the dashboard.
 async function createFile(type, fileName) {
     // CHANGE THIS --> get from dictionary in models
     if (type === 'des') {
@@ -148,7 +168,7 @@ function link_to_file(file_id) {
 }
 
 async function copyLink(file_id) {
-    const link = `http://xlr8.online/user-dashboard/access-file?file_id=${file_id}`;
+    const link = `https://xlr8.online/user-dashboard/access-file?file_id=${file_id}`;
 
     navigator.clipboard.writeText(link)
         .then(() => {

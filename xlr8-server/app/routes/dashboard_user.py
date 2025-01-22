@@ -78,6 +78,9 @@ def get_file_data():
 
     user_id = session.get('user_id')
     org_id = session.get('org_id')
+
+    tempUser = None
+    user = None
     
     user = User.query.filter_by(id=user_id).first()
     org = Org.query.filter_by(id=org_id).first()

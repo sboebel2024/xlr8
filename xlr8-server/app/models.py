@@ -4,13 +4,16 @@ from sqlalchemy.orm import validates
 import uuid
 from sqlalchemy import String
 
-# Utility function
+# Utility functions
 def register_temp_user(ip):
     tempUser = TempUser(ip_addr=ip)
     db.session.add(tempUser)
     db.session.commit()
     return tempUser
 
+# CHANGE THIS WHEN THERE ARE MORE TYPES OF FILE ~
+# it needs to go look up where the images are for 
+# different file types
 def load_des_image():
     with open('app/static/desmos.png', 'rb') as img_file:
         return img_file.read()
@@ -21,26 +24,22 @@ managed_users_table = db.Table(
     db.Column('manager_id', String(36), db.ForeignKey('users.id', ondelete='CASCADE'), primary_key=True),
     db.Column('employee_id', String(36), db.ForeignKey('users.id', ondelete='CASCADE'), primary_key=True)
 )
-
 user_org_table = db.Table(
     'user_org',
     db.Column('user_id', String(36), db.ForeignKey('users.id', ondelete='CASCADE'), primary_key=True),
     db.Column('org_id', db.Integer, db.ForeignKey('orgs.id', ondelete='CASCADE'), primary_key=True)
 )
-
 user_file_table = db.Table(
     'user_file',
     db.Column('user_id', String(36), db.ForeignKey('users.id', ondelete='CASCADE'), primary_key=True),
     db.Column('file_id', String(36), db.ForeignKey('files.id', ondelete='CASCADE'), primary_key=True),
     db.Column('local_path', db.String(255))
 )
-
 file_orgs_table = db.Table(
     'file_org',
     db.Column('org_id', db.Integer, db.ForeignKey('orgs.id', ondelete='CASCADE'), primary_key=True),
     db.Column('file_id', String(36), db.ForeignKey('files.id', ondelete='CASCADE'), primary_key=True)
 )
-
 temp_file_table = db.Table(
     'temp_file',
     db.Column('user_id', db.Integer, db.ForeignKey('tempusers.id', ondelete='CASCADE'), primary_key=True),
@@ -64,6 +63,7 @@ class User(db.Model):
 
     filesOwned = db.relationship('File', backref='owning_user', cascade='all, delete-orphan')
 
+    # Use this when we integrate orgs
     managed_users = db.relationship(
         'User',
         secondary=managed_users_table,
@@ -116,7 +116,7 @@ class File(db.Model):
         if self.ext == "des" and not self.image:
             self.image = load_des_image()
 
-# Org model
+# Org model ~ Not currently being used
 class Org(db.Model):
     __tablename__ = 'orgs'
 
@@ -127,7 +127,7 @@ class Org(db.Model):
     signing_user_id = db.Column(String(36), db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
     signing_user = db.relationship('User', foreign_keys=[signing_user_id])
 
-# FileAccessLog model
+# FileAccessLog model ~ Not currently being used
 class FileAccessLog(db.Model):
     __tablename__ = 'file_access_logs'
 
