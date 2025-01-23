@@ -415,6 +415,7 @@ def delete_file():
 def add_user_to_file():
     data = request.get_json()
     file_id = data['file_id']
+    print(file_id)
     user_id = data['user_id']
 
     user = User.query.get(user_id)
