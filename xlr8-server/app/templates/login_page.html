@@ -36,7 +36,7 @@
     <p id="message" style="margin-top: 20px; font-weight: bold; color: red;"></p>
 
     <script id="file-id" type="application/json">
-        {{ fileid | default('null') | safe }}
+        {{ fileid | default("-1") | tojson | safe }}
     </script>
 
     <script>
@@ -74,12 +74,16 @@
                     messageElement.innerText = data.message;
                     console.log('Login successful:', data);
                     userId = data.user_id;
+
+                    console.log(fileId);
                     
-                    if (fileId ) {
+                    if (fileId !== "-1") {
                         const payload2 = {
                             file_id: fileId,
                             user_id: userId
                         };
+
+                        console.log(fileId);
 
                         fetch('/user-dashboard/add-user-to-file', {
                             method: 'POST',
@@ -100,7 +104,7 @@
                             console.error('Error:', error);
                         });
                     } else {
-                        window.location.href = '/user-dashboard';
+                        window.location.href = '/user-dashboard/';
                     }
 
                 } else {
@@ -117,8 +121,8 @@
             
         }
         // Login button event listener
-        let fileIdText = document.getElementById("file-id").textContent.trim();
-        let fileId = fileIdText !== "null" ? parseInt(fileIdText, 10) : NaN;
+        const fileIdScript = document.getElementById('file-id');
+        const fileId = JSON.parse(fileIdScript.textContent);
         document.getElementById('loginButton').addEventListener('click', function() {
             log_in();
         });

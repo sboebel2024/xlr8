@@ -38,10 +38,15 @@
         {{ userFname | tojson | safe }} 
     </script>
     <script id="user-id" type="application/json">
-        {{ userid | safe }} 
+        {{ userid | tojson | safe }} 
     </script>
     
-    
-    <script src="{{ url_for('static', filename='js/src/serve_desmos_script.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/src/serve-desmos/styles.js')}}"></script>
+    <script src="{{ url_for('static', filename='js/src/serve-desmos/render.js')}}"></script>
+    <script src="{{ url_for('static', filename='js/src/serve-desmos/requests.js')}}"></script>
+    <script src="{{ url_for('static', filename='js/src/pkgFunctions.js')}}"></script>
+    <script src="{{ url_for('static', filename='js/src/pkgStyles.js')}}"></script>
+    <script src="{{ url_for('static', filename='js/src/pkgRenders.js')}}"></script>
+    <script src="{{ url_for('static', filename='js/src/serve-desmos/main.js') }}" defer></script>
 </body>
 </html>
