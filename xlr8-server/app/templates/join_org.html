@@ -88,6 +88,7 @@
         }
 
         createInputField("Organization Name", "text", "orgName", "Enter organization name");
+        createInputField("Join Code", "text", "orgCode", "Enter 6 digit code...");
 
         const signupButton = document.createElement("button");
         signupButton.type = "submit";
@@ -127,7 +128,8 @@
             event.preventDefault();
 
             const formData = {
-                orgName: document.getElementById('orgName').value
+                orgName: document.getElementById('orgName').value,
+                code: document.getElementById('orgCode').value
             };
 
             responseMessage.innerText = "Processing...";

@@ -4,6 +4,21 @@ function createIco(icoClass, derivative) {
     derivative.appendChild(lnkIco);
 }
 
+function renderCreateButton(createContainer) {
+    createButton = document.createElement('button');
+    createButton.onclick = () => createFile('des', 'Untitled.des');
+    styleCreateButton(createButton);
+    
+    renderPopup(createButton, "Create File", 48, -80, 80);
+
+    createIco("fa-plus", createButton);
+
+    createContainer.appendChild(createButton);
+
+    // Create a search for what type (later)
+}
+
+
 function renderPopup(derivative, text, x, y, width) {
     const savePopup = document.createElement('div');
     derivative.addEventListener("mouseenter", () => {
@@ -30,7 +45,7 @@ function renderPopup(derivative, text, x, y, width) {
 function renderDropdown(listElems, derivative, x, y, width, isPopup) {
     const container = document.createElement('div');
     if (isPopup) {
-        renderPopup(derivative, "File Info", 30, 30, 80);
+        renderPopup(derivative, "File Info", 30, -80, 80);
     }
     derivative.addEventListener("mouseenter", () => {
         const ico = derivative.children[0];
@@ -85,13 +100,13 @@ function renderOrgNameDiv(orgNameContainer) {
 function renderUserNameContainer_None(userNameContainer) {
     styleUserNameContainer_None(userNameContainer);
     userNameContainer.onclick = () => logUserIn();
-    renderPopup(userNameContainer, "Log In", 48, 10, 60);
+    renderPopup(userNameContainer, "Log In", 48, -60, 60);
     createIco('fa-arrow-right', userNameContainer);
 }
 
 function renderUserNameContainer_NotNone(userNameContainer, userId) {
     styleUserNameContainer_NotNone(userNameContainer);
-    renderPopup(userNameContainer, "Log Out", 48, -20, 60)
+    renderPopup(userNameContainer, "Log Out", 48, -60, 60)
     userNameContainer.onclick = () => logUserOut(userId);
     renderUserNameDiv(userNameContainer);
     //createIco("fa-arrow-left", userNameContainer)
@@ -99,7 +114,7 @@ function renderUserNameContainer_NotNone(userNameContainer, userId) {
 
 function renderOrgNameContainer(orgNameContainer) {
     styleUserNameContainer_NotNone(orgNameContainer);
-    renderPopup(orgNameContainer, "About Org", 48, -20, 80)
+    renderPopup(orgNameContainer, "About Org", 48, -80, 80)
     orgNameContainer.onclick = () => {
         window.location.href = '/org-dashboard/';
     }
@@ -107,20 +122,33 @@ function renderOrgNameContainer(orgNameContainer) {
     //createIco("fa-arrow-left", userNameContainer)
 }
 
-function renderJoinOrgButton(joinOrgButton) {
-    createIco("fa-plus", joinOrgButton);
-    styleDashboardButton(joinOrgButton);
-    joinOrgButton.onclick = () => {
-        window.location.href = '/signup/render-join-org';
-    }
-    renderPopup(joinOrgButton, "Join Org", 48, 20, 80);
+function renderOrgNameContainer2(orgNameContainer) {
+    styleUserNameContainer_NotNone(orgNameContainer);
+    orgNameContainer.style.cursor = 'default';
+    renderOrgNameDiv(orgNameContainer)
 }
 
-function renderCreateOrgButton(createOrgButton) {
-    createIco("fa-plus", createOrgButton);
-    styleDashboardButton(createOrgButton);
-    createOrgButton.onclick = () => {
-        window.location.href = '/signup/render-create-org';
+function renderJoinOrgButton(joinOrgButton, user_name) {
+    joinOrgButton.style.all = 'unset';
+    if (user_name !== 'None') {
+        createIco("fa-plus", joinOrgButton);
+        styleDashboardButton(joinOrgButton);
+        joinOrgButton.onclick = () => {
+            window.location.href = '/signup/render-join-org';
+        }
+        renderPopup(joinOrgButton, "Join Org", 48, -80, 80);
     }
-    renderPopup(createOrgButton, "Create Org", 48, 20, 80);
 }
+
+function renderCreateOrgButton(createOrgButton, user_name) {
+    createOrgButton.style.all = 'unset';
+    if (user_name !== 'None') {
+        createIco("fa-plus", createOrgButton);
+        styleDashboardButton(createOrgButton);
+        createOrgButton.onclick = () => {
+            window.location.href = '/signup/render-create-org';
+        }
+        renderPopup(createOrgButton, "Create Org", 48, -80, 80);
+    }
+}
+

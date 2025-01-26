@@ -1,4 +1,43 @@
+function styleTitle2(title) {
+    title.style.height = '50px';
+    title.innerText = `${org_name} dashboard`;
+    title.style.display = 'flex';
+    title.style.alignItems = 'center';
+    title.style.justifyContent = 'center';
+    title.style.fontFamily = 'Arial, sans-serif';
+    title.style.fontWeight = 'bold';
+    title.style.fontSize = '20px';
+    //title.style.width = '150px';
+}
 
+function styleDash(dash) {
+    dash.style.height = '150px';
+    dash.style.width = '100%';
+    dash.style.marginTop = '10px';
+    dash.style.marginBottom = '10px';
+    dash.style.display = 'flex';
+    dash.style.flexDirection = 'row';
+    dash.style.gap = '10px';
+    dash.style.justifycomtent = 'center';
+    dash.style.fontFamily = 'Arial, sans-serif';
+    dash.style.fontSize = '20px';    
+}
+
+function styleCodeViewer(dash) {
+    dash.style.display = 'flex';
+    dash.style.flexDirection = 'column';
+    dash.style.alignItems = 'center';
+    dash.style.justifyContent = 'center';
+    dash.style.height = '130px';
+    dash.style.width = '130px';
+    dash.style.boxShadow = '4px 4px 10px rgba(0,0,0,0.3)';
+    dash.style.borderRadius = '10px';
+    dash.style.marginRight = '10px';
+    dash.style.marginLeft = '10px';
+    dash.style.paddingRight = '10px';
+    dash.style.cursor = 'pointer';
+    dash.style.paddingLeft = '10px';
+}
 
 function styleListItem(listItem) {
     listItem.style.all = 'unset';

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<!-- This is the HTML page for the xlr8 User Dashboard. -->
+<html lang="en">
+<head>
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='favicon-16x16.png') }}">
+    <link rel="manifest" href="{{ url_for('static', filename='site.webmanifest') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>org dashboard</title>
+</head>
+<body>
+    <main>
+        <div id="main"></div>
+    </main>
+    <script id="user-name" type="application/json">
+        {{ userName | tojson | safe }}
+    </script>
+    <script id="user-id" type="application/json">
+        {{ userId | tojson | safe }}
+    </script>
+    <script id="org-name" type="application/json">
+        {{ orgName | tojson | safe }}
+    </script>
+    <script id="org-id" type="application/json">
+        {{ orgId | tojson | safe }}
+    </script>
+    <script src="{{ url_for('static', filename='js/src/org-dashboard/styles.js')}}"></script>
+    <script src="{{ url_for('static', filename='js/src/org-dashboard/render.js')}}"></script>
+    <script src="{{ url_for('static', filename='js/src/org-dashboard/requests.js')}}"></script>
+    <script src="{{ url_for('static', filename='js/src/pkgFunctions.js')}}"></script>
+    <script src="{{ url_for('static', filename='js/src/pkgStyles.js')}}"></script>
+    <script src="{{ url_for('static', filename='js/src/pkgRenders.js')}}"></script>
+    <script src="{{ url_for('static', filename='js/src/org-dashboard/main.js') }}" defer></script>
+</body>
+</html>

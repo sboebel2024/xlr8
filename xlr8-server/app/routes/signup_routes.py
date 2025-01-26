@@ -38,13 +38,20 @@ def create_org():
     org = Org(orgName=orgName, signing_user=user)
     user.orgs.append(org)
 
+    org.admins.append(user)
+    
+
     db.session.add(org)
     db.session.commit() 
     # Payment
     # payload = request.get_data(as_text=True)
     # sig_header = request.headers.get('Stripe-Signature')
+
+    user.currentOrgId = org.id
     session['user_id'] = user.id
     session['org_id'] = org.id
+
+    db.session.commit()
 
     # try:
     #     # Verify the webhook signature

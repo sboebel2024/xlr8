@@ -29,7 +29,8 @@ managed_users_table = db.Table(
 user_org_table = db.Table(
     'user_org',
     db.Column('user_id', String(36), db.ForeignKey('users.id', ondelete='CASCADE'), primary_key=True),
-    db.Column('org_id', db.Integer, db.ForeignKey('orgs.id', ondelete='CASCADE'), primary_key=True)
+    db.Column('org_id', String(36), db.ForeignKey('orgs.id', ondelete='CASCADE'), primary_key=True),
+    db.Column('treepath', db.JSON, nullable=False, default=lambda: [0])
 )
 user_file_table = db.Table(
     'user_file',
@@ -44,8 +45,8 @@ temp_file_table = db.Table(
 )
 org_admins = db.Table(
     'org_admins',
-    db.Column('org_id', db.Integer, db.ForeignKey('orgs.id'), primary_key=True),
-    db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True)
+    db.Column('org_id', String(36), db.ForeignKey('orgs.id'), primary_key=True),
+    db.Column('user_id', String(36), db.ForeignKey('users.id'), primary_key=True)
 )
 
 # User model
@@ -62,7 +63,7 @@ class User(db.Model):
     email = db.Column(db.String(50), nullable=False, unique=True)
     temporary = db.Column(db.Boolean, nullable=False)
     base_path = db.Column(db.String(255), nullable=True)
-    # currentOrgId = db.Column(db.String(255), nullable=False)
+    currentOrgId = db.Column(String(36), nullable=True)
 
     filesOwned = db.relationship('File', backref='owning_user', cascade='all, delete-orphan')
 
@@ -102,10 +103,11 @@ class File(db.Model):
     content = db.Column(db.Text, nullable=False)
     
     owning_user_id = db.Column(String(36), db.ForeignKey('users.id', ondelete='SET NULL'))
-    org_id = db.Column(db.Integer, db.ForeignKey('orgs.id', ondelete='SET NULL'), nullable=True)
+    org_id = db.Column(String(36), db.ForeignKey('orgs.id', ondelete='SET NULL'), nullable=True)
     org = db.relationship('Org', back_populates='files')
     users = db.relationship('User', secondary=user_file_table, backref='files')
     tempUsers = db.relationship('TempUser', secondary = temp_file_table, backref='files')
+    treepath = db.Column(db.JSON, nullable=False, default=lambda: [0])
 
     image = db.Column(db.LargeBinary, nullable=True)
 
@@ -123,7 +125,7 @@ class File(db.Model):
 class Org(db.Model):
     __tablename__ = 'orgs'
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     orgName = db.Column(db.String(50), nullable=False, unique=True)
     users = db.relationship('User', secondary=user_org_table, back_populates='orgs')
     files = db.relationship('File', back_populates='org', lazy='dynamic')

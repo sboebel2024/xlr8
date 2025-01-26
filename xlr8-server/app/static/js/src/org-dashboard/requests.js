@@ -1,9 +1,50 @@
-async function fetchFileData(isCards) {
+async function retrieveCode() {
+    try {
+        const response = await fetch('/org-dashboard/get-code');
+
+        if(!response.ok) {
+            throw new Error(`Error: ${response.status} - ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        console.log(data.code);
+        return data.code;
+
+    } catch (error) {
+        console.error('Error grabbing code:', error);
+    }
+}
+
+async function copyCode(code) {
+
+    navigator.clipboard.writeText(code)
+        .catch(err => {
+            console.error('Failed to copy: ', err); 
+        });
+}
+
+async function getMembersData() {
+    try {
+        const response = await fetch('/org-dashboard/get-org-user-data');
+
+        if(!response.ok) {
+            throw new Error(`Error: ${response.status} - ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        return data;
+
+    } catch (error) {
+        console.error('Error grabbing code:', error);
+    }
+}
+
+async function fetchFileDataOrgs(isCards) {
     try {
         const requestData = {
-            isCards: isCards
+            isCards: isCards,
         };
-        const response = await fetch('/user-dashboard/get-file-data', {
+        const response = await fetch('/org-dashboard/get-file-data-org', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -97,7 +138,7 @@ async function delete_file(file_id) {
 async function updateFileList(isCards) {
     try {
         // Fetch the latest file data
-        const data = await fetchFileData(isCards);
+        const data = await fetchFileDataOrgs(isCards);
 
         // Render the updated file list
         try {

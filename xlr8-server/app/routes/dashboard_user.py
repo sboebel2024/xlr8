@@ -54,6 +54,8 @@ def render_site():
     
     if user_id:
         user = User.query.get(user_id)
+        if user:
+            org_id = user.currentOrgId
     
     if org_id and user_id:
         org = Org.query.get(org_id)
