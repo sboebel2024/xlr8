@@ -10,6 +10,29 @@ stripe.api_key = 'your-secret-key'
 
 WEBHOOK_SECRET = 'your-secret-key'
 
+def reset_treepath(user_id, org_id, new_treepath=[0]):
+    try:
+        # Perform the update on the user_org_table
+        result = db.session.execute(
+            user_org_table.update()
+            .where(user_org_table.c.user_id == user_id)
+            .where(user_org_table.c.org_id == org_id)
+            .values(treepath=new_treepath)
+        )
+
+        if result.rowcount == 0:
+            print(f"No matching record found for user_id={user_id}, org_id={org_id}")
+            return False  # Indicates failure (record not found)
+
+        db.session.commit()
+        print(f"Treepath reset successfully for user_id={user_id}, org_id={org_id}")
+        return True  # Indicates success
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error resetting treepath: {e}")
+        return False  # Indicates failure
+
 @signup_bp.route('/render-signup', methods=['GET'])
 def render_signup():
     return render_template('signup_page.html')
@@ -50,6 +73,7 @@ def create_org():
     user.currentOrgId = org.id
     session['user_id'] = user.id
     session['org_id'] = org.id
+    org.generate_new_code()
 
     db.session.commit()
 
@@ -92,7 +116,12 @@ def join_org():
 
     # Check if the user is already a member
     if org in user.orgs:
-        return jsonify({"status": "NOK", "message": "User is already a member of this organization"}), 400
+        user.currentOrgId = org.id
+        tp =  [-1]
+        reset_success = reset_treepath(user_id=user.id, org_id=org.id, new_treepath=tp)
+        print(f"Success: {reset_success}")
+        db.session.commit()
+        return jsonify({"status": "NOK", "message": "User is already a member of this organization"}), 201
 
     data = request.get_json()
     orgName = data['orgName']
@@ -104,17 +133,18 @@ def join_org():
     if org.daily_code != code:
         return jsonify({"status": "NOK", "message": "Invalid code"}), 400
     
-    if (datetime.now(timezone.utc) - org.code_updated_at).days > 0:
-        return jsonify({"status": "NOK", "message": "Code expired"}), 400
-        
-    
-    
+
     session['user_id'] = user.id
     session['org_id'] = org.id
     user.orgs.append(org)
+    user.currentOrgId = org.id
     db.session.add(user)
     db.session.commit()
-    return jsonify({"status": "OK", "message": f"Requested to join {orgName}"}), 200
+    tp = [-1]
+    reset_success = reset_treepath(user_id=user.id, org_id=org.id, new_treepath=tp)
+    print(f"Success: {reset_success}")
+    db.session.commit()
+    return jsonify({"status": "OK", "message": f"Joined {orgName}!"}), 200
 
 
 

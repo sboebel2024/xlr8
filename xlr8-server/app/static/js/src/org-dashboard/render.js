@@ -39,7 +39,9 @@ function renderHeader(header, user_name, org_name) {
 
 function renderTreeContainer(createContainer) {
     createButton = document.createElement('button');
-    createButton.onclick = () => createFile('des', 'Untitled.des');
+    createButton.onclick = () => {
+        window.location.href = '/org-dashboard/org-tree';
+    };
     styleCreateButton(createButton);
     
     renderPopup(createButton, "View Org Tree", 48, -125, 125);

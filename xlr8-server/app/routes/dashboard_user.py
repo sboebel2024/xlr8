@@ -56,6 +56,8 @@ def render_site():
         user = User.query.get(user_id)
         if user:
             org_id = user.currentOrgId
+
+    print(f"Org ID: {org_id}")
     
     if org_id and user_id:
         org = Org.query.get(org_id)

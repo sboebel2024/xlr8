@@ -61,6 +61,9 @@ const userId = JSON.parse(userIdScript.textContent);
 const org_nameScript = document.getElementById("org-name");
 const org_name = JSON.parse(org_nameScript.textContent);
 
+console.log(user_name);
+console.log(org_name);
+
 // Get rid of the margins
 document.body.style.margin = '0';
 

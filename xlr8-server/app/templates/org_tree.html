@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>tree</title>
+</head>
+<body>
+    <div id="main"></div>
+    <footer id="footer"></footer>
+
+<script>
+    const main = document.getElementById('main');
+
+    document.body.style.margin = 0;
+    document.body.style.backgroundColor = '#888';
+    document.body.style.fontFamily = 'Arial, sans-serif';
+    //document.body.style.position = 'relative';
+
+    let isClicked = false;
+
+    async function getOrgData() {
+        try {
+            const response = await fetch('/org-dashboard/get-org-data', {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                // Handle non-JSON error responses
+                let errorMessage = `Error: ${response.status} - ${response.statusText}`;
+                try {
+                    const errorData = await response.json();
+                    errorMessage = errorData.message || errorMessage;
+                } catch (jsonError) {
+                    console.warn('Response is not JSON:', jsonError);
+                }
+                return { error: errorMessage };
+            }
+
+            const orgData = await response.json();
+            console.log('Org Data:', orgData);
+
+            if (orgData.status !== 'OK') {
+                return { error: orgData.message || 'Failed to fetch organization data.' };
+            }
+
+        return orgData;
+        } catch (error) {
+            return { error: 'An unexpected error occurred.' };
+        }
+    }
+
+    async function changeTreepath(manager_id, employee_id) {
+        try {
+            const payload = {
+                manager_id,
+                employee_id
+            };
+
+            const response = await fetch('/org-dashboard/change-treepath', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                // Handle non-JSON error responses
+                let errorMessage = `Error: ${response.status} - ${response.statusText}`;
+
+                return { error: errorMessage };
+            }
+
+
+        return orgData;
+        } catch (error) {
+            return { error: 'An unexpected error occurred.' };
+        }
+    }
+
+    async function updateTp() {
+        try {
+            const response = await fetch('/org-dashboard/update-treepath');
+
+            if (!response.ok) {
+                // Handle non-JSON error responses
+                let errorMessage = `Error: ${response.status} - ${response.statusText}`;
+
+                return { error: errorMessage };
+            }
+
+        } catch (error) {
+            return { error: 'An unexpected error occurred.' };
+        }
+    }
+
+    window.onload = async () => {
+        const res = await getOrgData();
+        if (res.error) {
+            console.error('Error fetching org data:', res.error);
+        } else {
+            console.log('Org data received:', res);
+            users = res.users;
+            renderTree(users);
+        }
+        await updateTp();
+    };    
+    function renderTree(users) {
+        nonAlignedUsers = [];
+        for (let user of users) {
+            renderScreen(user);
+        }
+    }
+
+    function renderCard(card, user) {
+        card.style.height = '30px';
+        card.style.display = 'flex';
+        card.style.alignItems = 'center';
+        card.style.padding = '10px';
+        card.style.borderRadius = '10px';
+        card.style.boxShadow = '4px 4px 10px rgba(0,0,0,0.3)';
+        card.innerText = `${user.firstName} ${user.lastName}`;
+        card.style.position = 'absolute';
+        card.style.backgroundColor = '#FFF';
+        card.style.fontFamily = 'Arial, sans-serif';
+        card.style.fontSize = '18px';
+        card.style.cursor = 'pointer';
+        card.style.zIndex = '9999';
+        card.classList.add('card');
+        card.id = user.id;
+
+        card.onclick = async () => {
+            if (!isClicked) {
+                popup.remove();
+                isClicked = true;
+                let list = Array.from(document.querySelectorAll('.card'));
+                if (list.includes(card)) {
+                    const index = list.indexOf(card);
+                    if (index !== -1) {
+                        card.replaceWith(card.cloneNode(true));  // Clones the element without event listeners
+                        list.splice(index, 1);  // Remove from the list
+                    }
+                    list = list.filter(item => item !== card);
+                }
+
+                for (let item of list) {
+                    console.log(item.id);
+
+                    item.onclick = async () => {
+                        await changeTreepath(card.id, item.id);
+                    }
+
+                    item.addEventListener('mouseenter', () => {
+                        item.style.boxShadow =  '4px 4px 10px rgba(0,0,0,0.6)';
+                        item.style.border = '2px solid red';
+                        popup2 = document.createElement('div');
+                        stylePopup(popup, "Manage This User", item, 60, -125, 125);
+                    });
+                    item.addEventListener('mousedown', () => {
+                        item.style.boxShadow =  '4px 4px 10px rgba(0,0,0,0.3)';
+                        item.style.border = '';
+                    });
+                    item.addEventListener('mouseup', () => {
+                        item.style.boxShadow =  '4px 4px 10px rgba(0,0,0,0.6)';
+                        item.style.border = '2px solid red';
+                    });
+                    item.addEventListener('mouseleave', () => {
+                        item.style.boxShadow =  '4px 4px 10px rgba(0,0,0,0.3)';
+                        item.style.border = '';
+                        popup2.remove()
+                    })
+                }
+                await updateTp();
+            }
+
+
+
+
+
+        }
+
+
+        card.addEventListener('mouseenter', () => {
+            card.style.boxShadow =  '4px 4px 10px rgba(0,0,0,0.6)';
+            popup = document.createElement('div');
+            stylePopup(popup, "Add Managed User", card, 60, -125, 125);
+        });
+        card.addEventListener('mousedown', () => {
+            card.style.boxShadow =  '4px 4px 10px rgba(0,0,0,0.3)';
+        });
+        card.addEventListener('mouseup', () => {
+            card.style.boxShadow =  '4px 4px 10px rgba(0,0,0,0.6)';
+        });
+        card.addEventListener('mouseleave', () => {
+            card.style.boxShadow =  '4px 4px 10px rgba(0,0,0,0.3)';
+            popup.remove()
+        })
+            
+
+    }
+
+    function renderScreen(user) {
+        const card = document.createElement('button');
+        card.style.all = 'unset';
+
+        renderCard(card, user)
+
+
+        for (let i=0; i<(Math.max(...users.map(user => user.treepath.length))); i++) {
+            const holderDiv = document.createElement('div');
+            holderDiv.style.position = 'absolute';
+            holderDiv.style.top = `${((user.treepath.length-1)*93)+30}px`;
+            holderDiv.style.height = '50px';
+            holderDiv.style.width = '100%';
+            holderDiv.style.display = 'flex';
+            holderDiv.style.alignItems = 'center';
+            holderDiv.style.justifyContent = 'center';
+            holderDiv.id = `${user.treepath.length}`;
+            main.appendChild(holderDiv);
+        }
+
+
+        if (user.treepath[0] === -1) {
+
+            const holderDiv = document.createElement('div');
+            holderDiv.style.position = 'absolute';
+            holderDiv.style.left = '0px';
+            holderDiv.style.height = '100%';
+            holderDiv.style.display = 'flex';
+            holderDiv.style.flexDirection = 'column';
+            holderDiv.style.alignItems = 'center';
+            holderDiv.style.justifyContent = 'center';
+            holderDiv.style.boxShadow = '4px 4px 10px rgba(0,0,0,0.6)';
+            main.appendChild(holderDiv);
+            card.style.left = '10px';
+            holderDiv.appendChild(card);
+
+        } else {
+            const hD = document.getElementById(`${user.treepath.length}`);
+            hD.appendChild(card);
+        }
+    }
+
+</script>
+
+<script src="{{ url_for('static', filename='js/src/pkgStyles.js')}}"></script>
+<script src="{{ url_for('static', filename='js/src/pkgRenders.js')}}"></script>
+
+</body>
+</html>
