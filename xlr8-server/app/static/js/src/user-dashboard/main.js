@@ -57,16 +57,19 @@ const user_nameScript = document.getElementById("user-name")
 const user_name = JSON.parse(user_nameScript.textContent);
 const userIdScript = document.getElementById('user-id');
 const userId = JSON.parse(userIdScript.textContent);
+const org_nameScript = document.getElementById("org-name");
+const org_name = JSON.parse(org_nameScript.textContent);
 
 // Get rid of the margins
 document.body.style.margin = '0';
 
 // Get the root div
 const main = document.getElementById('main');
+console.log(user_name)
 
 // Create the header
 const header = document.createElement('div');
-renderHeader(header);
+renderHeader(header, user_name, org_name);
 main.appendChild(header);
 
 // Create the render container
@@ -76,13 +79,3 @@ styleRenderContainer(renderContainer);
 main.appendChild(renderContainer);
 
 // Create the container for the log in or log out button
-userNameContainer = document.createElement('button');
-userNameContainer.style.all = 'unset';
-if (user_name === "None") {
-    // Render the log in button
-    renderUserNameContainer_None(userNameContainer);
-} else {   
-    // Render the log out button
-    renderUserNameContainer_NotNone(userNameContainer, userId);
-}
-header.appendChild(userNameContainer);

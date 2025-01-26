@@ -29,8 +29,18 @@
     </button>
     <br><br>
     <button id="signupButton" 
-        style="padding: 10px 20px; border: none; color: black; border-radius: 4px; cursor: pointer;">
+        style="padding: 10px 20px; border: none; color: black; border-radius: 4px; cursor: pointer; width: 250px;">
         Don't have an account? Sign up!
+    </button>
+    <br><br>
+    <button id="joinOrg" 
+        style="padding: 10px 20px; border: none; color: black; border-radius: 4px; cursor: pointer; width: 250px;">
+        Join Org
+    </button>
+    <br><br>
+    <button id="createOrg" 
+        style="padding: 10px 20px; border: none; color: black; border-radius: 4px; cursor: pointer; width: 250px;">
+        Create Org
     </button>
 
     <p id="message" style="margin-top: 20px; font-weight: bold; color: red;"></p>
@@ -134,6 +144,13 @@
         document.getElementById('signupButton').addEventListener('click', function () {
             window.location.href = '/signup/render-signup'
         });
+        document.getElementById('joinOrg').addEventListener('click', function () {
+            window.location.href = '/signup/render-join-org'
+        });
+        document.getElementById('createOrg').addEventListener('click', function () {
+            window.location.href = '/signup/render-create-org'
+        });
+
     </script>
 
 </body>

@@ -59,7 +59,11 @@ function renderHeader(header) {
 
     const logo = document.createElement('div');
     styleLogo(logo);
+    logo.addEventListener('mousedown', () => {
+        linkToDashboard();
+    });
     header.appendChild(logo);
+    
 
     const pathLogo = document.createElement('div');
     stylePathLogo(pathLogo);
@@ -81,7 +85,17 @@ function renderHeader(header) {
     }
     header.appendChild(userNameContainer);
 
-    const dashboardButton = document.createElement('button');
-    renderDashboardButton(dashboardButton);
-    header.appendChild(dashboardButton);
+    // const dashboardButton = document.createElement('button');
+    // renderDashboardButton(dashboardButton);
+    // header.appendChild(dashboardButton);
+
+
+    const joinOrgButton = document.createElement('button');
+    renderJoinOrgButton(joinOrgButton);
+    header.appendChild(joinOrgButton);
+
+
+    const createOrgButton = document.createElement('button');
+    renderCreateOrgButton(createOrgButton);
+    header.appendChild(createOrgButton);
 }

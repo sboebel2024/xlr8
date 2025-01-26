@@ -21,6 +21,9 @@
     <script id="user-id" type="application/json">
         {{ userId | tojson | safe }}
     </script>
+    <script id="org-name" type="application/json">
+        {{ orgName | tojson | safe }}
+    </script>
     <script src="{{ url_for('static', filename='js/src/user-dashboard/styles.js')}}"></script>
     <script src="{{ url_for('static', filename='js/src/user-dashboard/render.js')}}"></script>
     <script src="{{ url_for('static', filename='js/src/user-dashboard/requests.js')}}"></script>

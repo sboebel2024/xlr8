@@ -13,6 +13,7 @@ function styleCreateButton(createButton) {
     createButton.style.fontWeight = 'lighter';
 }
 
+
 function styleListItem(listItem) {
     listItem.style.all = 'unset';
     listItem.style.cursor = 'pointer';
@@ -29,8 +30,8 @@ function styleListItem(listItem) {
 }
 
 function styleImage(image) {
-    image.style.width = '130px';
-    image.style.height = '130px';
+    image.style.width = '140px';
+    image.style.height = '140px';
     image.style.marginTop = '15px';
 }
 
@@ -41,6 +42,7 @@ function styleInfoContainer(infoContainer) {
     infoContainer.style.width = '150px';
     infoContainer.style.height = '65px';
     infoContainer.style.display = 'flex';
+    infoContainer.style.marginTop = '7.5px';
     infoContainer.style.alignItems = 'center';
     infoContainer.style.maxWidth = '150px';
     infoContainer.style.justifyContent = 'center';
@@ -68,6 +70,7 @@ function styleLnkButton(lnkButton) {
     lnkButton.style.display = 'flex';
     lnkButton.style.justifyContent = 'center';
     lnkButton.style.alignItems = 'center';
+    lnkButton.style.marginRight = '10px';
 }
 
 function styleName(name) {

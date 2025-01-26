@@ -16,7 +16,7 @@ function renderCreateButton(createContainer) {
     createButton.onclick = () => createFile('des', 'Untitled.des');
     styleCreateButton(createButton);
     
-    renderPopup(createButton, "create file", 48, 20, 80);
+    renderPopup(createButton, "Create File", 48, 20, 80);
 
     createIco("fa-plus", createButton);
 
@@ -26,22 +26,33 @@ function renderCreateButton(createContainer) {
 }
 
 function renderOwner(owner, file) {
-    owner.textContent = `Owner: ${file.owner}`;
+    owner.textContent = `${file.owner}`;
     if (`${file.owner}` === 'None' ) {
-        owner.textContent = `Owner: Temp`
+        owner.textContent = ``;
     }
     owner.classList.add("file-owner");
+    owner.style.marginLeft = '10px';
+    owner.style.marginRight = '10px';
 }
 
-function renderLnkButton(lnkButton, listItem, file) {
+function renderOrgName(orgName, file) {
+    orgName.textContent = `${file.org}`;
+    if (`${file.org}` === 'None' ) {
+        orgName.textContent = ``;
+    }
+    orgName.classList.add("file-org-name");
+    orgName.style.marginLeft = '10px';
+    orgName.style.marginRight = '10px';
+}
+
+function renderLnkButton(lnkButton, file) {
     styleLnkButton(lnkButton);
     // This is a custom implementation of renderPopup
-    const savePopup3 = document.createElement('div');
+    const savecontainer3 = document.createElement('div');
     lnkButton.addEventListener('mouseenter', () => {
         lnkButton.style.backgroundColor = '#AAA';
-        listItem.onclick = "";
-        stylePopup(savePopup3, "copy share link", lnkButton, 30, 45, 110);
-        savePopup3.id = 'lnkPopup';
+        stylePopup(savecontainer3, "Copy Share Link", lnkButton, 30, 55, 125);
+        savecontainer3.id = 'lnkPopup';
 
     });
     lnkButton.addEventListener("mousedown", () => {
@@ -52,13 +63,97 @@ function renderLnkButton(lnkButton, listItem, file) {
     });
     lnkButton.addEventListener('mouseleave', () => {
         lnkButton.style.backgroundColor = '';
-        listItem.onclick = () => link_to_file(file.id);
-        document.body.removeChild(savePopup3);
+        document.body.removeChild(savecontainer3);
     });
     lnkButton.onclick = () => copyLink(file.id);
 
     createIco('fa-share', lnkButton);
 }
+
+
+function renderUserInfo(lnkButton) {
+    styleLnkButton(lnkButton);
+    // This is a custom implementation of renderPopup
+    const savecontainer3 = document.createElement('div');
+    lnkButton.addEventListener('mouseenter', () => {
+        lnkButton.style.backgroundColor = '#AAA';
+        stylePopup(savecontainer3, "User Info", lnkButton, 30, 30, 80);
+        savecontainer3.id = 'lnkcontainer';
+
+    });
+    lnkButton.addEventListener("mousedown", () => {
+        lnkButton.style.backgroundColor = '#FFF';
+    });
+    lnkButton.addEventListener("mouseup", () => {
+        lnkButton.style.backgroundColor = '#AAA';
+    });
+    lnkButton.addEventListener('mouseleave', () => {
+        lnkButton.style.backgroundColor = '';
+        
+        document.body.removeChild(savecontainer3);
+    });
+    //lnkButton.onclick = () => copyLink(file.id); <-- change to User Profile
+
+    createIco('fa-caret-right', lnkButton);
+}
+
+function renderOrgInfo(lnkButton) {
+    styleLnkButton(lnkButton);
+    // This is a custom implementation of renderPopup
+    const savecontainer3 = document.createElement('div');
+    lnkButton.addEventListener('mouseenter', () => {
+        lnkButton.style.backgroundColor = '#AAA';
+        stylePopup(savecontainer3, "Org Info", lnkButton, 30, 30, 80);
+        savecontainer3.id = 'lnkcontainer';
+
+    });
+    lnkButton.addEventListener("mousedown", () => {
+        lnkButton.style.backgroundColor = '#FFF';
+    });
+    lnkButton.addEventListener("mouseup", () => {
+        lnkButton.style.backgroundColor = '#AAA';
+    });
+    lnkButton.addEventListener('mouseleave', () => {
+        lnkButton.style.backgroundColor = '';
+        //listItem.onclick = () => link_to_file(file.id);
+        document.body.removeChild(savecontainer3);
+    });
+    lnkButton.onclick = () => window.location.href = '/org-dashboard/';
+
+    createIco('fa-caret-right', lnkButton);
+}
+
+function renderDelButton(lnkButton, file) {
+    styleLnkButton(lnkButton);
+    // This is a custom implementation of renderPopup
+    const savecontainer3 = document.createElement('div');
+    lnkButton.addEventListener('mouseenter', () => {
+        lnkButton.style.backgroundColor = '#AAA';
+        stylePopup(savecontainer3, "Delete File", lnkButton, 30, 30, 80);
+        savecontainer3.id = 'delPopup';
+
+    });
+    lnkButton.addEventListener("mousedown", () => {
+        lnkButton.style.backgroundColor = '#FFF';
+    });
+    lnkButton.addEventListener("mouseup", () => {
+        lnkButton.style.backgroundColor = '#AAA';
+    });
+    lnkButton.addEventListener('mouseleave', () => {
+        lnkButton.style.backgroundColor = '';
+        //listItem.onclick = () => link_to_file(file.id);
+        document.body.removeChild(savecontainer3);
+    });
+    lnkButton.onclick = () => {
+        delete_file(file.id);
+        const grandfather = lnkButton.parentElement.parentElement;
+        grandfather.remove();
+        savecontainer3.remove();
+    }
+
+    createIco('fa-times', lnkButton);
+}
+
 
 function renderInfoContainer2(infoContainer2, listItem, file) {
     styleInfoContainer2(infoContainer2);
@@ -73,22 +168,77 @@ function renderInfoContainer2(infoContainer2, listItem, file) {
     infoContainer2.appendChild(lnkButton);
 }
 
-function renderXButton(xButton, listItem, file) {
+function renderLnk(lnk, text) {
+    lnk.innerText = text;
+    lnk.style.marginLeft = '10px';
+    lnk.style.marginRight = '10px';
+}
+
+function renderList(file) {
+    const owner = document.createElement('div');
+    renderOwner(owner, file);
+    const orgName = document.createElement('div');
+    renderOrgName(orgName, file);
+    const lnk = document.createElement('div');
+    renderLnk(lnk, "Copy Link");
+    const del= document.createElement('div');
+    renderLnk(del, "Delete File")
+    const orgNameContainer = document.createElement('div');
+    const ownerContainer = document.createElement('div');
+    const lnkContainer = document.createElement('div');
+    const deleteContainer = document.createElement('div');
+    ownerContainer.style.display = 'flex';
+    ownerContainer.style.flexDirection = 'row';
+    orgNameContainer.style.display = 'flex';
+    orgNameContainer.style.flexDirection = 'row';
+    lnkContainer.style.display = 'flex';
+    lnkContainer.style.flexDirection = 'row';
+    deleteContainer.style.display = 'flex';
+    deleteContainer.style.flexDirection = 'row';
+    const userInfoButton = document.createElement('div');
+    const orgInfoButton = document.createElement('div');
+    const lnkButton = document.createElement('div');
+    const delButton = document.createElement('div');
+    renderOrgInfo(orgInfoButton);
+    renderUserInfo(userInfoButton);
+    renderLnkButton(lnkButton, file);
+    renderDelButton(delButton, file);
+    
+
+    ownerContainer.appendChild(owner);
+    ownerContainer.appendChild(userInfoButton);
+    orgNameContainer.appendChild(orgName);
+    orgNameContainer.appendChild(orgInfoButton);
+    lnkContainer.appendChild(lnk);
+    lnkContainer.appendChild(lnkButton);
+    deleteContainer.appendChild(del);
+    deleteContainer.appendChild(delButton);
+
+    const list = [ownerContainer, orgNameContainer, lnkContainer, deleteContainer];
+    return list;
+}
+
+function renderXButton(xButton, file) {
     styleXButton(xButton);
-    xButton.onclick = () => delete_file(file.id);
-    renderPopup(xButton, "Delete File", 30, 30, 80);
+    const list = renderList(file);
+    renderDropdown(list, xButton, -150, 40, 150, true);
+    // renderPopup(xButton, "Delete File", 30, 30, 80);
+    xButton.addEventListener('onclick', () => {
+        setTimeout(function() {
+            xButton.style.color = '#000';
+        }, 2000);
+    });
     xButton.addEventListener('mouseleave', () => {
         xButton.style.color = '#000';
     });
-    createIco('fa-times', xButton);
-    
+    createIco('fa-caret-right', xButton);
 }
 
 function renderInfoContainer(infoContainer, listItem, file) {
     styleInfoContainer(infoContainer);
 
     const xButton = document.createElement('button');
-    renderXButton(xButton, listItem, file);
+    renderXButton(xButton, file);
 
     const name = document.createElement('p');
     name.textContent = file.name;
@@ -130,9 +280,6 @@ function renderListItem(listItem, file) {
     const infoContainer = document.createElement('div');
     renderInfoContainer(infoContainer, listItem, file);
 
-    const infoContainer2 = document.createElement('div');
-    renderInfoContainer2(infoContainer2, listItem, file);
-
     const xButton = infoContainer.children[1];
     xButton.addEventListener('mouseenter', () => {
         listItem.onclick = "";
@@ -140,10 +287,8 @@ function renderListItem(listItem, file) {
     xButton.addEventListener('mouseleave', () => {
         listItem.onclick = () => link_to_file(file.id);
     });
-    
     listItem.appendChild(image);
     listItem.appendChild(infoContainer);
-    listItem.appendChild(infoContainer2);
 }
 
 function renderFileList(files) {
@@ -164,7 +309,7 @@ function renderFileList(files) {
     }
 }
 
-function renderHeader(header) {
+function renderHeader(header, user_name, org_name) {
     styleHeader(header);
 
     const logo = document.createElement('div');
@@ -184,5 +329,38 @@ function renderHeader(header) {
     header.appendChild(createContainer);
 
     renderCreateButton(createContainer);
+
+    userNameContainer = document.createElement('button');
+    userNameContainer.style.all = 'unset';
+    console.log(user_name)
+    if (user_name === "None") {
+        // Render the log in button
+        renderUserNameContainer_None(userNameContainer);
+    } else {   
+        // Render the log out button
+        renderUserNameContainer_NotNone(userNameContainer, userId);
+    }
+    header.appendChild(userNameContainer);
+
+    orgNameContainer = document.createElement('button');
+    orgNameContainer.style.all = 'unset';
+    if (org_name === "None") {
+        // Render the org join etc. stuff
+        const joinOrgButton = document.createElement('button');
+        renderJoinOrgButton(joinOrgButton);
+        header.appendChild(joinOrgButton);
+
+    } else {   
+        // Render the log out button
+        renderOrgNameContainer(orgNameContainer);
+        header.appendChild(orgNameContainer);
+    }
+    
+
+
+
+    const createOrgButton = document.createElement('button');
+    renderCreateOrgButton(createOrgButton);
+    header.appendChild(createOrgButton);
 
 }

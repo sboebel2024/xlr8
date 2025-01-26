@@ -1,5 +1,7 @@
 import os
 
+# Different configs for the flask app. Pick n' choose
+
 class Config:
     """Base configuration."""
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'your_secret_key'
