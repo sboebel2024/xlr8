@@ -6,16 +6,53 @@
     <title>tree</title>
 </head>
 <body>
+    <canvas id="myCanvas"></canvas>
     <div id="main"></div>
     <footer id="footer"></footer>
 
 <script>
     const main = document.getElementById('main');
 
+    const canvas = document.getElementById('myCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // Resize the canvas to fill the entire viewport
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+    }
+
+    function drawLineBetweenElements(el1, el2) {
+        const box1 = el1.getBoundingClientRect();
+        const box2 = el2.getBoundingClientRect();
+
+        const x1 = box1.left + box1.width / 2;
+        const y1 = box1.top + box1.height / 2;
+        const x2 = box2.left + box2.width / 2;
+        const y2 = box2.top + box2.height / 2;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear previous lines
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.strokeStyle = "black";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    }
+
+    window.addEventListener('resize', () => {
+        resizeCanvas();
+        
+    });
+
     document.body.style.margin = 0;
     document.body.style.backgroundColor = '#888';
     document.body.style.fontFamily = 'Arial, sans-serif';
+    document.body.scrollbarWidth = 'none';
     //document.body.style.position = 'relative';
+
+    resizeCanvas();
 
     let isClicked = false;
 
@@ -105,14 +142,20 @@
         } else {
             console.log('Org data received:', res);
             users = res.users;
-            renderTree(users);
+            await renderTree(users);
         }
-        await updateTp();
     };    
-    function renderTree(users) {
+
+    async function renderTree(users) {
         nonAlignedUsers = [];
         for (let user of users) {
-            renderScreen(user);
+            renderScreen(user, users);
+        }
+        const allTreepathsLong = users.every(user => user.treepath.length > 1);
+        if (allTreepathsLong) {
+            await updateTp();
+        } else {
+            console.log("No treepath update needed!");
         }
     }
 
@@ -124,12 +167,12 @@
         card.style.borderRadius = '10px';
         card.style.boxShadow = '4px 4px 10px rgba(0,0,0,0.3)';
         card.innerText = `${user.firstName} ${user.lastName}`;
-        card.style.position = 'absolute';
+        //card.style.position = 'absolute';
         card.style.backgroundColor = '#FFF';
         card.style.fontFamily = 'Arial, sans-serif';
         card.style.fontSize = '18px';
         card.style.cursor = 'pointer';
-        card.style.zIndex = '9999';
+        card.style.zIndex = '10';
         card.classList.add('card');
         card.id = user.id;
 
@@ -152,6 +195,20 @@
 
                     item.onclick = async () => {
                         await changeTreepath(card.id, item.id);
+                        const cId = card.id;
+                        const iId = item.id;
+                        popup2.remove();
+                        const res = await getOrgData();
+                        users = res.users
+                        let list2 = Array.from(document.querySelectorAll('.card'));
+                        for (let itm of list2) {
+                            itm.remove();
+                        }
+                        await renderTree(users);
+                        newCard = document.getElementById(cId);
+                        newItem = document.getElementById(iId);
+                        popup2.remove();
+                        drawLineBetweenElements(newCard, newItem);
                     }
 
                     item.addEventListener('mouseenter', () => {
@@ -174,7 +231,6 @@
                         popup2.remove()
                     })
                 }
-                await updateTp();
             }
 
 
@@ -203,31 +259,39 @@
 
     }
 
-    function renderScreen(user) {
+    function renderScreen(users, user) {
         const card = document.createElement('button');
         card.style.all = 'unset';
 
         renderCard(card, user)
 
-
+// n
         for (let i=0; i<(Math.max(...users.map(user => user.treepath.length))); i++) {
             const holderDiv = document.createElement('div');
             holderDiv.style.position = 'absolute';
             holderDiv.style.top = `${((user.treepath.length-1)*93)+30}px`;
+            holderDiv.style.flexDirection = 'row';
             holderDiv.style.height = '50px';
             holderDiv.style.width = '100%';
             holderDiv.style.display = 'flex';
+            holderDiv.style.alignItems = 'stretch';
             holderDiv.style.alignItems = 'center';
             holderDiv.style.justifyContent = 'center';
+            holderDiv.style.gap = '10px';
             holderDiv.id = `${user.treepath.length}`;
             main.appendChild(holderDiv);
+        }
+
+        if (user.treepath.length > 1) {
+            const empTp = user.treepath;
+            const manTp = user.treepath.slice(0, -1);
         }
 
 
         if (user.treepath[0] === -1) {
 
             const holderDiv = document.createElement('div');
-            holderDiv.style.position = 'absolute';
+            //holderDiv.style.position = 'absolute';
             holderDiv.style.left = '0px';
             holderDiv.style.height = '100%';
             holderDiv.style.display = 'flex';
@@ -235,14 +299,17 @@
             holderDiv.style.alignItems = 'center';
             holderDiv.style.justifyContent = 'center';
             holderDiv.style.boxShadow = '4px 4px 10px rgba(0,0,0,0.6)';
+            holderDiv.style.paddingRight = '10px';
             main.appendChild(holderDiv);
             card.style.left = '10px';
+            card.style.width = '75px';
             holderDiv.appendChild(card);
 
         } else {
             const hD = document.getElementById(`${user.treepath.length}`);
             hD.appendChild(card);
         }
+
     }
 
 </script>

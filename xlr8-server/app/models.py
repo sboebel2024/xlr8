@@ -30,7 +30,7 @@ user_org_table = db.Table(
     'user_org',
     db.Column('user_id', String(36), db.ForeignKey('users.id', ondelete='CASCADE'), primary_key=True),
     db.Column('org_id', String(36), db.ForeignKey('orgs.id', ondelete='CASCADE'), primary_key=True),
-    db.Column('treepath', db.JSON, nullable=False, default=lambda: [0])
+    db.Column('treepath', db.JSON, nullable=False, default=lambda: [0]),
 )
 user_file_table = db.Table(
     'user_file',

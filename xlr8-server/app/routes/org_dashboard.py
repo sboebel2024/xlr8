@@ -176,7 +176,7 @@ def change_treepath():
         func.json_array_length(user_org_table.c.treepath) == len(managerTp) + 1
     ).all()
 
-    number = len(subordinates) + 1
+    number = len(subordinates) 
 
     newTp = managerTp + [number]
 
@@ -332,7 +332,6 @@ def get_file_data_org():
             db.session.query(File)
             .join(user_org_table, File.org_id == user_org_table.c.org_id)
             .filter(user_org_table.c.user_id == user_id)
-            .filter(user_org_table.c.org_id == org.id)
             .filter(func.json_array_length(File.treepath) >= user_treepath_length)
             .all()
         )
