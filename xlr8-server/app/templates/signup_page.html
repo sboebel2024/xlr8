@@ -54,6 +54,48 @@
         form.style.textAlign = "center";
         form.style.fontFamily = "Arial, sans-serif";
 
+        function generateVerificationCode(length = 6) {
+            const characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            let code = '';
+            for (let i = 0; i < length; i++) {
+                code += characters.charAt(Math.floor(Math.random() * characters.length));
+            }
+            return code;
+        }
+
+        async function sendVerificationEmail(email) {
+            const code = generateVerificationCode();
+            const response = await fetch('/send-verification', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email, code })
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                responseMessage.textContent = 'A verification code has been sent to your email.';
+                return code;  // Save the code for later verification
+            } else {
+                responseMessage.textContent = 'Failed to send verification email.';
+                return null;
+            }
+        }
+
+        async function verifyUser(email) {
+            const sentCode = await sendVerificationEmail(email);
+
+            if (sentCode) {
+                const userInput = prompt('Enter the verification code sent to your email:');
+                if (userInput === sentCode) {
+                    responseMessage.textContent = 'Verification successful!';
+                } else {
+                    responseMessage.textContent = 'Invalid code. Please try again!';
+                }
+            }
+        }
+
         // Function to create input fields
         function createInputField(labelText, inputType, inputId, placeholderText) {
             const label = document.createElement("label");
@@ -106,7 +148,6 @@
             form.appendChild(checkboxLabel);
         }
 
-
         // Signup button
         const signupButton = document.createElement("button");
         signupButton.type = "submit";
@@ -130,6 +171,124 @@
         };
 
         form.appendChild(signupButton);
+
+        const orgButton = document.createElement("button");
+        orgButton.style.marginTop = '20px';
+        orgButton.type = "submit";
+        orgButton.innerText = "Join an Organization";
+        orgButton.style.width = "100%";
+        orgButton.style.padding = "12px";
+        orgButton.style.fontSize = "16px";
+        orgButton.style.backgroundColor = "#AAA";
+        orgButton.style.border = "none";
+        orgButton.style.color = "#fff";
+        orgButton.style.borderRadius = "5px";
+        orgButton.style.cursor = "pointer";
+        orgButton.style.transition = "background 0.3s";
+        orgButton.style.fontFamily = "Arial, sans-serif";
+
+        orgButton.onmouseover = function () {
+            orgButton.style.backgroundColor = "#888";
+        };
+        orgButton.onmouseout = function () {
+            orgButton.style.backgroundColor = "#AAA";
+        };
+
+        form.appendChild(orgButton);
+
+        const createOrgButton = document.createElement("button");
+        createOrgButton.style.marginTop = '20px';
+        createOrgButton.type = "submit";
+        createOrgButton.innerText = "Create an Organization";
+        createOrgButton.style.width = "100%";
+        createOrgButton.style.padding = "12px";
+        createOrgButton.style.fontSize = "16px";
+        createOrgButton.style.backgroundColor = "#AAA";
+        createOrgButton.style.border = "none";
+        createOrgButton.style.color = "#fff";
+        createOrgButton.style.borderRadius = "5px";
+        createOrgButton.style.cursor = "pointer";
+        createOrgButton.style.transition = "background 0.3s";
+        createOrgButton.style.fontFamily = "Arial, sans-serif";
+
+        createOrgButton.onmouseover = function () {
+            createOrgButton.style.backgroundColor = "#888";
+        };
+        createOrgButton.onmouseout = function () {
+            createOrgButton.style.backgroundColor = "#AAA";
+        };
+
+        form.appendChild(createOrgButton);
+
+        orgButton.onclick = async () => {
+            const formData = {
+                username: document.getElementById('username').value,
+                firstName: document.getElementById('firstName').value,
+                lastName: document.getElementById('lastName').value,
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value,
+                phoneNumber: document.getElementById('phoneNumber').value,
+                birthday: document.getElementById('birthday').value,
+                creatingOrg: 'False',
+                joiningOrg: "False",
+                orgName: "False",
+            };
+
+            responseMessage.innerText = "Processing...";
+            responseMessage.style.color = "blue";
+
+            const response = await fetch('/signup/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
+
+            const result = await response.json();
+            responseMessage.innerText = result.message;
+            responseMessage.style.color = response.ok ? "green" : "red";
+            if (response.ok) {
+                window.location.href = '/signup/render-join-org';
+            } else {
+                setTimeout(() => {
+                    window.location.href = '/signup/render-signup';
+                }, 10000);
+            }
+            
+        };
+        createOrgButton.onclick = async () => {
+            const formData = {
+                username: document.getElementById('username').value,
+                firstName: document.getElementById('firstName').value,
+                lastName: document.getElementById('lastName').value,
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value,
+                phoneNumber: document.getElementById('phoneNumber').value,
+                birthday: document.getElementById('birthday').value,
+                creatingOrg: 'False',
+                joiningOrg: "False",
+                orgName: "False",
+            };
+
+            responseMessage.innerText = "Processing...";
+            responseMessage.style.color = "blue";
+
+            const response = await fetch('/signup/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
+
+            const result = await response.json();
+            responseMessage.innerText = result.message;
+            responseMessage.style.color = response.ok ? "green" : "red";
+            if (response.ok) {
+                window.location.href = '/signup/render-create-org';
+            } else {
+                setTimeout(() => {
+                    window.location.href = '/signup/render-signup';
+                }, 10000);
+            }
+        };
 
         // Response message div
         const responseMessage = document.createElement("div");
@@ -156,7 +315,7 @@
                 password: document.getElementById('password').value,
                 phoneNumber: document.getElementById('phoneNumber').value,
                 birthday: document.getElementById('birthday').value,
-                isOrg: 'False',
+                creatingOrg: 'False',
                 joiningOrg: "False",
                 orgName: "False",
             };
@@ -175,6 +334,10 @@
             responseMessage.style.color = response.ok ? "green" : "red";
             if (response.ok) {
                 window.location.href = '/user-dashboard/';
+            } else {
+                setTimeout(() => {
+                    window.location.href = '/signup/render-signup';
+                }, 10000);
             }
         });
     </script>

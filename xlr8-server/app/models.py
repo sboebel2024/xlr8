@@ -3,6 +3,8 @@ from datetime import datetime, timezone
 from sqlalchemy.orm import validates
 import uuid
 from sqlalchemy import String
+import random
+import string
 
 # Utility functions
 def register_temp_user(ip):
@@ -27,7 +29,8 @@ managed_users_table = db.Table(
 user_org_table = db.Table(
     'user_org',
     db.Column('user_id', String(36), db.ForeignKey('users.id', ondelete='CASCADE'), primary_key=True),
-    db.Column('org_id', db.Integer, db.ForeignKey('orgs.id', ondelete='CASCADE'), primary_key=True)
+    db.Column('org_id', String(36), db.ForeignKey('orgs.id', ondelete='CASCADE'), primary_key=True),
+    db.Column('treepath', db.JSON, nullable=False, default=lambda: [0])
 )
 user_file_table = db.Table(
     'user_file',
@@ -35,15 +38,15 @@ user_file_table = db.Table(
     db.Column('file_id', String(36), db.ForeignKey('files.id', ondelete='CASCADE'), primary_key=True),
     db.Column('local_path', db.String(255))
 )
-file_orgs_table = db.Table(
-    'file_org',
-    db.Column('org_id', db.Integer, db.ForeignKey('orgs.id', ondelete='CASCADE'), primary_key=True),
-    db.Column('file_id', String(36), db.ForeignKey('files.id', ondelete='CASCADE'), primary_key=True)
-)
 temp_file_table = db.Table(
     'temp_file',
-    db.Column('user_id', db.Integer, db.ForeignKey('tempusers.id', ondelete='CASCADE'), primary_key=True),
+    db.Column('user_id', String(36), db.ForeignKey('tempusers.id', ondelete='CASCADE'), primary_key=True),
     db.Column('file_id', String(36), db.ForeignKey('files.id', ondelete='CASCADE'), primary_key=True),
+)
+org_admins = db.Table(
+    'org_admins',
+    db.Column('org_id', String(36), db.ForeignKey('orgs.id'), primary_key=True),
+    db.Column('user_id', String(36), db.ForeignKey('users.id'), primary_key=True)
 )
 
 # User model
@@ -60,6 +63,7 @@ class User(db.Model):
     email = db.Column(db.String(50), nullable=False, unique=True)
     temporary = db.Column(db.Boolean, nullable=False)
     base_path = db.Column(db.String(255), nullable=True)
+    currentOrgId = db.Column(String(36), nullable=True)
 
     filesOwned = db.relationship('File', backref='owning_user', cascade='all, delete-orphan')
 
@@ -82,9 +86,8 @@ class User(db.Model):
 # Temporary users
 class TempUser(db.Model):
     __tablename__ = 'tempusers'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    ip_addr = db.Column(db.String, nullable=False)
+    id = db.Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    ip_addr = db.Column(String(45), nullable=False)
 
 
 # File model
@@ -100,9 +103,11 @@ class File(db.Model):
     content = db.Column(db.Text, nullable=False)
     
     owning_user_id = db.Column(String(36), db.ForeignKey('users.id', ondelete='SET NULL'))
-    orgs = db.relationship('Org', secondary=file_orgs_table, back_populates='files')
+    org_id = db.Column(String(36), db.ForeignKey('orgs.id', ondelete='SET NULL'), nullable=True)
+    org = db.relationship('Org', back_populates='files')
     users = db.relationship('User', secondary=user_file_table, backref='files')
     tempUsers = db.relationship('TempUser', secondary = temp_file_table, backref='files')
+    treepath = db.Column(db.JSON, nullable=False, default=lambda: [0])
 
     image = db.Column(db.LargeBinary, nullable=True)
 
@@ -120,12 +125,19 @@ class File(db.Model):
 class Org(db.Model):
     __tablename__ = 'orgs'
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     orgName = db.Column(db.String(50), nullable=False, unique=True)
     users = db.relationship('User', secondary=user_org_table, back_populates='orgs')
-    files = db.relationship('File', secondary=file_orgs_table, back_populates='orgs')
+    files = db.relationship('File', back_populates='org', lazy='dynamic')
     signing_user_id = db.Column(String(36), db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
     signing_user = db.relationship('User', foreign_keys=[signing_user_id])
+    admins = db.relationship('User', secondary='org_admins', backref='admin_of_orgs')
+    daily_code = db.Column(db.String(6), nullable=True)
+
+    def generate_new_code(self):
+        """Generate a new 6-character code."""
+        self.daily_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+        self.code_updated_at = datetime.now(timezone.utc)
 
 # FileAccessLog model ~ Not currently being used
 class FileAccessLog(db.Model):
@@ -133,7 +145,7 @@ class FileAccessLog(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(String(36), db.ForeignKey('users.id', ondelete='CASCADE'), nullable=True)
-    temp_user_id = db.Column(db.Integer, db.ForeignKey('tempusers.id', ondelete='CASCADE'), nullable=True)
+    temp_user_id = db.Column(String(36), db.ForeignKey('tempusers.id', ondelete='CASCADE'), nullable=True)
     file_id = db.Column(String(36), db.ForeignKey('files.id', ondelete='CASCADE'), nullable=True)
     accessed_at = db.Column(db.DateTime, default=datetime.now(timezone.utc), nullable=False)
 
@@ -141,7 +153,9 @@ class FileAccessLog(db.Model):
     file = db.relationship('File', backref='file_access_logs')
     temp_user = db.relationship('TempUser', backref='file_access_logs')
 
+
 ext_lookup_json = {
     "des": "serve_desmos.html",
     "docx": "test_google.html"
 }
+

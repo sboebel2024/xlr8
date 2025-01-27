@@ -42,20 +42,41 @@ def clear_session():
 @user_dashboard_bp.route('/', methods=['GET', 'POST'])
 def render_site():
     print(dict(session))
+
+    user = None
+    tempUser = None
+    org = None
+
     user_id = session.get('user_id')
-    user = User.query.get(user_id)
+    org_id = session.get('org_id')
+
+    
+    
+    if user_id:
+        user = User.query.get(user_id)
+        if user:
+            org_id = user.currentOrgId
+
+    print(f"Org ID: {org_id}")
+    
+    if org_id and user_id:
+        org = Org.query.get(org_id)
+
     if not user:
-        ip = request.remote_addr
+        ip = str(request.headers.get('X-Forwarded-For', request.remote_addr))
         tempUser = TempUser.query.filter(TempUser.ip_addr == ip).first()
         if not tempUser:
             tempUser = register_temp_user(ip)
             print(f"Temp User ID: {tempUser.id}")
             
         print(f"Temp User ID: {tempUser.id}")
-        return render_template('user_dashboard.html', userName = 'None', userId=None)
+        return render_template('user_dashboard.html', userName = 'None', userId=None, orgName = 'None')
+    
+    if not org:
+        return render_template('user_dashboard.html', userName = f"{user.firstName}", userId=user.id, orgName = 'None')
 
     print(f"Session User ID: {user.id}")
-    return render_template('user_dashboard.html', userName = f"{user.firstName}", userId=user.id)
+    return render_template('user_dashboard.html', userName = f"{user.firstName}", userId=user.id, orgName = org.orgName)
 
 @user_dashboard_bp.route('/debug', methods=['GET'])
 def debug():
@@ -72,21 +93,22 @@ def get_file_data():
 
     Returns:
         json := dictionary of files containing name, owning user, id, and image
-
     """
     data = request.get_json()
 
     user_id = session.get('user_id')
     org_id = session.get('org_id')
 
+    print(f"User ID: {user_id}")
+
     tempUser = None
     user = None
     
-    user = User.query.filter_by(id=user_id).first()
-    org = Org.query.filter_by(id=org_id).first()
+    if user_id:
+        user = User.query.filter_by(id=user_id).first()
     
     if not user:
-        ip = request.remote_addr
+        ip = str(request.headers.get('X-Forwarded-For', request.remote_addr))
         tempUser = TempUser.query.filter(TempUser.ip_addr == ip).first()
         if not tempUser:
             tempUser = register_temp_user(ip)
@@ -94,51 +116,38 @@ def get_file_data():
 
     isCards = data['isCards']
     # determine if user is a signing user
-    if (not org):
 
-    
-        if isCards:
-            if user and (not tempUser):
-                recent_files = (
-                    db.session.query(File).filter(File.users.any(User.id == user.id)).all()
-                )
-            if (not user) and tempUser:
-                recent_files = (
-                    db.session.query(File).filter(File.tempUsers.any(TempUser.id == tempUser.id)).all()
-                )
 
-            else:
-                print('No user or tempuser. Issue!')
 
-            return jsonify({
-                "status": "OK",
-                "recent_files": [
-                    {
-                        "id": file.id, 
-                        "name": file.fileName, 
-                        "owner": f"{file.owning_user.firstName if file.owning_user_id is not None else None}", 
-                        "image": base64.b64encode(file.image).decode('utf-8') if file.image else None
-                    }
-                    for file in recent_files
-                ]
-            }), 200
-        
-        else:
-            accessed_files = (
-                db.session.query(File)
-                .join(FileAccessLog, File.id == FileAccessLog.file_id)
-                .filter(FileAccessLog.user_id == user_id)
-                # .filter(user in File.users) <-- same as above
-                .order_by(FileAccessLog.accessed_at.desc())
-                .all()
+    if isCards:
+        if user:
+            recent_files = (
+                db.session.query(File).filter(File.users.any(User.id == user.id)).all()
             )
-            return jsonify({
-                "status": "OK",
-                "files": [
-                    {"id": file.id, "name": file.fileName, "owner": file.owning_user.firstName, "image": file.image}
-                    for file in accessed_files
-                ]
-            }), 200
+        if (not user) or tempUser:
+            recent_files = (
+                db.session.query(File).filter(File.tempUsers.any(TempUser.id == tempUser.id)).all()
+            )
+
+        return jsonify({
+            "status": "OK",
+            "recent_files": [
+                {
+                    "id": file.id, 
+                    "name": file.fileName, 
+                    "owner": f"{file.owning_user.firstName if file.owning_user_id is not None else None}", 
+                    "image": base64.b64encode(file.image).decode('utf-8') if file.image else None,
+                    "org": (file.org.orgName) if (file.org) else None
+                }
+                for file in recent_files
+            ]
+        }), 200
+    
+    else:
+        return jsonify({"status":"NOK", "message":"Non-cards functionality not included yet"}), 400
+        
+    
+        
         
         
 
@@ -154,11 +163,14 @@ def access_file():
     Returns:
         json := access status
     """
+    user = None
+    tempUser = None
+
+
     file_id = request.args.get('file_id')
     user_id = session.get('user_id')  # Get the current user's ID from the session
-    print(f'Session User ID: {user_id}')
     if not user_id:
-        ip = request.remote_addr
+        ip = str(request.headers.get('X-Forwarded-For', request.remote_addr))
         tempUser = TempUser.query.filter(TempUser.ip_addr == ip).first()
         if not tempUser:
             tempUser = register_temp_user(ip)
@@ -167,10 +179,10 @@ def access_file():
         userFname = str("BAD_USERNAME_#$&^%")
         pan_userid = tempUser.id
 
-    print(file_id)
     file = File.query.get(file_id)
     if not file:
         return jsonify({"status": "NOK", "message": "File not found"}), 404
+
 
     access_log = FileAccessLog(user_id=user_id, file_id=file_id)
     db.session.add(access_log)
@@ -183,7 +195,7 @@ def access_file():
             userFname = str(user.firstName)
             pan_userid = user_id
         if not user: 
-            ip = request.remote_addr
+            ip = str(request.headers.get('X-Forwarded-For', request.remote_addr))
             tempUser = register_temp_user(ip)
             print(f"Temp User ID: {tempUser.id}")
             userFname = str("Not Logged in!")
@@ -239,7 +251,7 @@ def edit_file():
     if not user_id:
         user_id = data.get('user_id') # for debugging
         if not user_id:
-            ip = request.remote_addr
+            ip = str(request.headers.get('X-Forwarded-For', request.remote_addr))
             tempUser = TempUser.query.filter(TempUser.ip_addr == ip).first()
             if not tempUser:
                 tempUser = register_temp_user(ip)
@@ -306,7 +318,8 @@ def create_file():
     """
 
     tempUser = None
-
+    user = None
+    org = None
 
     try: 
         data = request.get_json()
@@ -316,15 +329,22 @@ def create_file():
             return jsonify({"status": "NOK", "message": "Missing required fields: 'fileName'"}), 400
         
         user_id = session.get('user_id')  # Get the logged-in user's ID from the session
+        org_id = session.get('org_id')
+        print(f"Org ID: {org_id}")
 
-        user = User.query.get(user_id)
+        if user_id:
+            user = User.query.get(user_id)
+            if org_id:
+                org = Org.query.get(org_id)
+                if org:
+                    if (user not in org.users):
+                        return jsonify({"status": "NOK", "message": f"User {user.firstName} not in organization {org.orgName}"}), 400
 
         if not user:
-            ip = request.remote_addr
+            ip = str(request.headers.get('X-Forwarded-For', request.remote_addr))
             tempUser = TempUser.query.filter(TempUser.ip_addr == ip).first()
             if not tempUser:
                 tempUser = register_temp_user(ip)
-                    
 
         file_name = data['fileName']
         image = data.get('image', None)
@@ -340,7 +360,6 @@ def create_file():
         
         file = File(fileName=file_name, ext=ext, content=content)
 
-
         # Assign additional attributes
         if image:
             file.image = image
@@ -348,19 +367,18 @@ def create_file():
         Id = None
 
         if user:
-            print('Here 1')
             file.owning_user_id = user_id
             file.users.append(user)  # Assign the current user to the file
             Id = user_id
 
-        print('Here 2')
+        if org:
+            file.org = org
 
         if (not user):
-            print('Here 3')
             file.owning_user_id = None
+            print(str(request.headers.get('X-Forwarded-For', request.remote_addr)))
             file.tempUsers.append(tempUser)
             Id = tempUser.id
-
 
         # Commit to the database
         try:
@@ -380,7 +398,7 @@ def create_file():
                 "id": file.id,
                 "name": file.fileName,
                 "extension": file.ext,
-                "userid": Id
+                "userId": Id
             }
         }), 201
     except Exception as e:
@@ -427,6 +445,7 @@ def add_user_to_file():
     file.users.append(user)
 
     return jsonify({'status': 'OK', 'message': f'User {user.firstName} added to file {file.fileName}.'}), 200
+
 
 
     

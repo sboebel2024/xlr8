@@ -17,6 +17,7 @@ def logout():
     user = User.query.get(user_id)
     if user:
         session['user_id'] = None
+        session['org_id'] = None
         return jsonify({"status": "OK", "message": "Logout successful"}), 200
     
     return jsonify({"status": "NOK", "message": "Missing/Incorrect username or Password"}), 401

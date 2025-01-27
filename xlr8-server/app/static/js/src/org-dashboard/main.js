@@ -1,18 +1,15 @@
-/*
 
-USER_DASHBOARD JAVASCRIPT SERVING FILE
+// Org Dashboard
 
-This is one of the big bad files with a lot of stuff
-that needs to get changed over to React. I will do my
-best to comment all of this!
-    ~Spencer
 
-*/
-
-// This is basically to change between cards and list.
-// It's probably a good idea to stick with cards so that
-// we don't have to write a new method to serve a list
-// renderer.
+const user_nameScript = document.getElementById("user-name")
+const user_name = JSON.parse(user_nameScript.textContent);
+const userIdScript = document.getElementById('user-id');
+const userId = JSON.parse(userIdScript.textContent);
+const org_nameScript = document.getElementById("org-name");
+const org_name = JSON.parse(org_nameScript.textContent);
+const orgIdScript = document.getElementById("org-id");
+const orgId = JSON.parse(orgIdScript.textContent);
 
 // Declare State Variables
 const isCards = true;
@@ -53,32 +50,21 @@ window.addEventListener('pageshow', (event) => {
     }
 });
 
-// Read in data from Jinja
-const user_nameScript = document.getElementById("user-name")
-const user_name = JSON.parse(user_nameScript.textContent);
-const userIdScript = document.getElementById('user-id');
-const userId = JSON.parse(userIdScript.textContent);
-const org_nameScript = document.getElementById("org-name");
-const org_name = JSON.parse(org_nameScript.textContent);
 
-console.log(user_name);
-console.log(org_name);
-
-// Get rid of the margins
 document.body.style.margin = '0';
 
-// Get the root div
 const main = document.getElementById('main');
 
-// Create the header
 const header = document.createElement('div');
 renderHeader(header, user_name, org_name);
+header.style.borderBottom = '2px solid #888';
 main.appendChild(header);
 
-// Create the render container
+const dash = document.createElement('div');
+renderDash(dash, user_name, org_name)
+main.appendChild(dash);
+
 const renderContainer = document.createElement('div');
 renderContainer.innerHTML = "";
 styleRenderContainer(renderContainer);
 main.appendChild(renderContainer);
-
-// Create the container for the log in or log out button

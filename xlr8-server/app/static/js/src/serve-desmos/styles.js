@@ -25,6 +25,7 @@ function styleLogo(logo) {
     logo.style.fontFamily = 'Arial, sans-serif';
     logo.style.fontWeight = 'bold';
     logo.style.fontSize = '20px';
+    logo.style.cursor = 'pointer';
 }
 
 function stylePathLogo(pathLogo) {
@@ -53,16 +54,4 @@ function styleSaveButton(saveButton) {
     saveButton.style.alignItems = 'center';
     saveButton.classList.add("logo-button");
     saveButton.style.cursor = 'pointer';
-}
-
-function styleDashboardButton(dashboardButton) {
-    dashboardButton.style.all = 'unset';
-    dashboardButton.style.width = '40px';
-    dashboardButton.style.height = '40px';
-    dashboardButton.style.color = '#AAA';
-    dashboardButton.style.display = 'flex';
-    dashboardButton.style.alignItems = 'center';
-    dashboardButton.style.justifyContent = 'center';
-    dashboardButton.style.borderRadius = '10px';
-    dashboardButton.style.cursor = 'pointer';
 }

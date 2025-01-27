@@ -2,7 +2,6 @@
 // write a loop listening for calculator.getState() changes and save after
 // a certain volume of changes
 
-
 calculator = Desmos.GraphingCalculator(document.getElementById('api_container'));
 
 let isUserTyping = false; // Track if the user is actively typing
@@ -180,6 +179,24 @@ calculator.setState(content);
 const header = document.getElementById('header');
 renderHeader(header);
 
+// // Allow for an inverted screen
+// container = document.querySelector('dcg-container');
+// console.log(container);
+// onSpecificClassAdded(container, '.dcg-inverted-colors', () => {
+
+//     addClassToChildren(header, 'inverted-colors');
+//     children = document.querySelectorAll('.inverted-colors');
+//     for (let child of children) {
+//         child.style.filter = 'invert(1)';
+//     }
+// });
+// watchClassRemoval(container, 'dcg-inverted-colors', () => {
+//     children = document.querySelectorAll('.inverted-colors');
+//     for (let child of children) {
+//         child.class.remove('inverted-colors');
+//     }
+// });
+
 // Initialize the WebSocket
 const socket = io('https://xlr8.online');
 console.log(`User ID: ${userId}, File ID: ${fileId}`);
@@ -189,10 +206,10 @@ socket.emit('join', { file_id: fileId, user_id: `User${userId}` });
 socket.on('state_update', (data) => {
     console.log('Received state update:', data);
 
-    // if (data.user_id === `User${userId}`) {
-    //     console.log('Ignoring self-originated update');
-    //     return;
-    // }
+    if (data.user_id === `User${userId}`) {
+        console.log('Ignoring self-originated update');
+        return;  
+    }
     if (loggingIn) {
         return;
     }
@@ -204,6 +221,8 @@ document.addEventListener("mousemove", (event) => {
     cursorY = event.clientY; // Y-coordinate of the cursor
     // console.log("Cursor position:", { x: cursorX, y: cursorY });
 });
+
+
 
 calculator.observeEvent("change", () => {
     console.log("User is typing...");
@@ -231,3 +250,5 @@ calculator.observeEvent("change", () => {
 
 // Monitor calculator state for changes and emit them
 calculator.observeEvent('change', emitStateUpdate);
+
+

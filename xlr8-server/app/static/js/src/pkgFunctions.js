@@ -73,3 +73,47 @@ async function changeFilename(newName) {
         return { status: 'NOK', message: 'An unexpected error occurred' };
     }
 }
+
+function onSpecificClassAdded(element, className, callback) {
+    const observer = new MutationObserver(mutations => {
+        mutations.forEach(mutation => {
+            if (mutation.attributeName === 'class') {
+                if (element.classList.contains(className)) {
+                    callback();
+                    observer.disconnect();  // Stop observing once class is found
+                }
+            }
+        });
+    });
+
+    observer.observe(element, { attributes: true });
+
+    return observer;  // Return observer in case you need to disconnect it manually later
+}
+
+function addClassToChildren(element, className) {
+    if (!element || !element.children) {
+        console.warn("Invalid element provided.");
+        return;
+    }
+
+    // Loop through all child elements and add the class
+    for (let child of element.children) {
+        child.classList.add(className);
+    }
+}
+
+function watchClassRemoval(element, className, callback) {
+    const observer = new MutationObserver(mutations => {
+        mutations.forEach(mutation => {
+            if (mutation.attributeName === 'class') {
+                if (!element.classList.contains(className)) {
+                    callback();
+                    observer.disconnect();  // Stop observing after removal
+                }
+            }
+        });
+    });
+
+    observer.observe(element, { attributes: true });
+}
