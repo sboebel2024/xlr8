@@ -41,6 +41,30 @@ function adjustInputWidth(form) {
     }
 }
 
+async function getExtensions() {
+    try  {
+        const response = await fetch('/user-dashboard/get-extensions', {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+
+        if(!response.ok) {
+            //throw new Error(`Error: ${response.status} - ${response.statusText}`);
+            return { error: `Error: ${response.status}` };
+        }
+
+        const data = await response.json();
+
+        return data.extensions;
+
+    } catch (error) {
+        console.error('Error grabbing code:', error);
+    }
+
+}
+
 async function changeFilename(newName) {
     try {
         const sanitizedFileName = newName.replace(/[^a-zA-Z0-9_]/g, '');
@@ -116,4 +140,84 @@ function watchClassRemoval(element, className, callback) {
     });
 
     observer.observe(element, { attributes: true });
+}
+
+async function togglePublicity(file) {
+    try {
+        payload = {
+            file_id: file.id
+        }
+        response = await fetch('/org-dashboard/toggle-publicity', {
+            method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            console.log('Successful:', result);
+        } else {
+            console.error('Error:', result.message);
+        }
+        
+        if (result.isVisible === 'False') {
+            return false;
+        }
+
+        if (result.isVisible === 'True') {
+            return true;
+        }
+
+    } catch (error) {
+        console.error('An unexpected error occurred:', error);
+        return { status: 'NOK', message: 'An unexpected error occurred' };
+    }
+}
+
+async function editFileContent(fileId, newContent, newFileName, newOwnerId = null) {
+    const url = '/user-dashboard/edit-file-content';
+    const payload = {
+        file_id: fileId,
+        content: newContent,
+        newFileName: `${newFileName}.des`
+    };
+    console.log(fileId);
+
+    // Add optional parameters if provided
+    
+    if (newOwnerId) {
+        payload.newOwnerId = newOwnerId;
+    } else {
+        payload.newOwnerId = null;
+    }
+
+    try {
+        // Send a POST request to the server
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
+        });
+
+        // Parse the JSON response
+        const result = await response.json();
+
+        // Handle the response
+        if (response.ok) {
+            console.log('File edited successfully:', result);
+        } else {
+            console.error('Error editing file:', result.message);
+        }
+
+        window.location.reload();
+        return result;
+    } catch (error) {
+        console.error('An unexpected error occurred:', error);
+        return { status: 'NOK', message: 'An unexpected error occurred' };
+    }
 }

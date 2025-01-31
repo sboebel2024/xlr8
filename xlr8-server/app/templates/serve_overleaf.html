@@ -7,11 +7,10 @@
     <link rel="manifest" href="{{ url_for('static', filename='site.webmanifest') }}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>xlr8 ~ desmos</title>
+    <title>xlr8 ~ overleaf</title>
     <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
     <script src=""></script>
-    <script src="https://www.desmos.com/api/v1.7/calculator.js?apiKey=dcb31709b452b1cf9dc26972add0fda6"></script>
     <style src="{{ url_for('static', filename='css/desmos-styles.css')}}" defer ></style>
 </head>
 
@@ -45,12 +44,9 @@
     </script>
     
     
-    <script src="{{ url_for('static', filename='js/src/serve-desmos/styles.js')}}"></script>
-    <script src="{{ url_for('static', filename='js/src/serve-desmos/render.js')}}"></script>
-    <script src="{{ url_for('static', filename='js/src/serve-desmos/requests.js')}}"></script>
     <script src="{{ url_for('static', filename='js/src/pkgFunctions.js')}}"></script>
     <script src="{{ url_for('static', filename='js/src/pkgStyles.js')}}"></script>
     <script src="{{ url_for('static', filename='js/src/pkgRenders.js')}}"></script>
-    <script src="{{ url_for('static', filename='js/src/serve-desmos/main.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/src/serve-overleaf/main.js')}}"></script>
 </body>
 </html>

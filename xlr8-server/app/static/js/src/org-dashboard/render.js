@@ -1,7 +1,12 @@
-function renderHeader(header, user_name, org_name) {
+async function renderHeader(header, user_name, org_name) {
     styleHeader(header);
 
     const logo = document.createElement('div');
+    logo.style.all = 'div';
+    logo.style.cursor = 'pointer';
+    logo.onclick = () => {
+        linkToDashboard();
+    }
     styleLogo(logo);
     header.appendChild(logo);
 
@@ -30,27 +35,35 @@ function renderHeader(header, user_name, org_name) {
         renderUserNameContainer_NotNone(userNameContainer, userId);
     }
     header.appendChild(userNameContainer);
+    if (isAdmin) {
 
-    treeContainer = document.createElement('button');
-    treeContainer.style.all = 'unset';
-    renderTreeContainer(treeContainer);
-    header.appendChild(treeContainer);
+        const treeContainer = document.createElement('button');
+        treeContainer.style.all = 'unset';
+        renderTreeContainer(treeContainer);
+        header.appendChild(treeContainer);
+
+        const code = await retrieveCode();
+        const codeContainer = document.createElement('button');
+        codeContainer.style.all = 'unset';
+        if (code === "None") {
+            renderCodeContainer(codeContainer, code);
+        } else {
+            renderCodeContainer(codeContainer, code);
+        }
+        codeContainer.style.paddingRight = '10px';
+        header.appendChild(codeContainer);
+    }
 }
 
-function renderTreeContainer(createContainer) {
-    createButton = document.createElement('button');
-    createButton.onclick = () => {
+function renderTreeContainer(treeContainer) {
+    treeButton = document.createElement('button');
+    treeButton.onclick = () => {
         window.location.href = '/org-dashboard/org-tree';
     };
-    styleCreateButton(createButton);
-    
-    renderPopup(createButton, "View Org Tree", 48, -125, 125);
-
-    createIco("fa-tree", createButton);
-
-    createContainer.appendChild(createButton);
-
-    // Create a search for what type (later)
+    styleCreateButton(treeButton);
+    renderPopup(treeButton, "View Org Tree", 48, -125, 125);
+    createIco("fa-tree", treeButton);
+    treeContainer.appendChild(treeButton);
 }
 
 
@@ -156,302 +169,4 @@ async function renderDash(dash, user_name, org_name) {
     dash.appendChild(memberViewer);
     dash.appendChild(addDataViewer);
 
-}
-
-function renderOwner(owner, file) {
-    owner.textContent = `${file.owner}`;
-    if (`${file.owner}` === 'None' ) {
-        owner.textContent = ``;
-    }
-    owner.classList.add("file-owner");
-    owner.style.marginLeft = '10px';
-    owner.style.marginRight = '10px';
-}
-
-function renderOrgName(orgName, file) {
-    orgName.textContent = `${file.org}`;
-    if (`${file.org}` === 'null' ) {
-        orgName.textContent = ``;
-    }
-    orgName.classList.add("file-org-name");
-    orgName.style.marginLeft = '10px';
-    orgName.style.marginRight = '10px';
-}
-
-function renderLnkButton(lnkButton, file) {
-    styleLnkButton(lnkButton);
-    // This is a custom implementation of renderPopup
-    const savecontainer3 = document.createElement('div');
-    lnkButton.addEventListener('mouseenter', () => {
-        lnkButton.style.backgroundColor = '#AAA';
-        stylePopup(savecontainer3, "Copy Share Link", lnkButton, 30, -125, 125);
-        savecontainer3.id = 'lnkPopup';
-
-    });
-    lnkButton.addEventListener("mousedown", () => {
-        lnkButton.style.backgroundColor = '#FFF';
-    });
-    lnkButton.addEventListener("mouseup", () => {
-        lnkButton.style.backgroundColor = '#AAA';
-    });
-    lnkButton.addEventListener('mouseleave', () => {
-        lnkButton.style.backgroundColor = '';
-        document.body.removeChild(savecontainer3);
-    });
-    lnkButton.onclick = () => copyLink(file.id);
-
-    createIco('fa-share', lnkButton);
-}
-
-
-function renderUserInfo(lnkButton) {
-    styleLnkButton(lnkButton);
-    // This is a custom implementation of renderPopup
-    const savecontainer3 = document.createElement('div');
-    lnkButton.addEventListener('mouseenter', () => {
-        lnkButton.style.backgroundColor = '#AAA';
-        stylePopup(savecontainer3, "User Info", lnkButton, 30, -80, 80);
-        savecontainer3.id = 'lnkcontainer';
-
-    });
-    lnkButton.addEventListener("mousedown", () => {
-        lnkButton.style.backgroundColor = '#FFF';
-    });
-    lnkButton.addEventListener("mouseup", () => {
-        lnkButton.style.backgroundColor = '#AAA';
-    });
-    lnkButton.addEventListener('mouseleave', () => {
-        lnkButton.style.backgroundColor = '';
-        
-        document.body.removeChild(savecontainer3);
-    });
-    //lnkButton.onclick = () => copyLink(file.id); <-- change to User Profile
-
-    createIco('fa-caret-right', lnkButton);
-}
-
-function renderOrgInfo(lnkButton) {
-    styleLnkButton(lnkButton);
-    // This is a custom implementation of renderPopup
-    const savecontainer3 = document.createElement('div');
-    lnkButton.addEventListener('mouseenter', () => {
-        lnkButton.style.backgroundColor = '#AAA';
-        stylePopup(savecontainer3, "Org Info", lnkButton, 30, -80, 80);
-        savecontainer3.id = 'lnkcontainer';
-
-    });
-    lnkButton.addEventListener("mousedown", () => {
-        lnkButton.style.backgroundColor = '#FFF';
-    });
-    lnkButton.addEventListener("mouseup", () => {
-        lnkButton.style.backgroundColor = '#AAA';
-    });
-    lnkButton.addEventListener('mouseleave', () => {
-        lnkButton.style.backgroundColor = '';
-        //listItem.onclick = () => link_to_file(file.id);
-        document.body.removeChild(savecontainer3);
-    });
-    lnkButton.onclick = () => window.location.href = '/org-dashboard/';
-
-    createIco('fa-caret-right', lnkButton);
-}
-
-function renderDelButton(lnkButton, file) {
-    styleLnkButton(lnkButton);
-    // This is a custom implementation of renderPopup
-    const savecontainer3 = document.createElement('div');
-    lnkButton.addEventListener('mouseenter', () => {
-        lnkButton.style.backgroundColor = '#AAA';
-        stylePopup(savecontainer3, "Delete File", lnkButton, 30, -80, 80);
-        savecontainer3.id = 'delPopup';
-
-    });
-    lnkButton.addEventListener("mousedown", () => {
-        lnkButton.style.backgroundColor = '#FFF';
-    });
-    lnkButton.addEventListener("mouseup", () => {
-        lnkButton.style.backgroundColor = '#AAA';
-    });
-    lnkButton.addEventListener('mouseleave', () => {
-        lnkButton.style.backgroundColor = '';
-        //listItem.onclick = () => link_to_file(file.id);
-        document.body.removeChild(savecontainer3);
-    });
-    lnkButton.onclick = () => {
-        delete_file(file.id);
-        const grandfather = lnkButton.parentElement.parentElement;
-        grandfather.remove();
-        savecontainer3.remove();
-    }
-
-    createIco('fa-times', lnkButton);
-}
-
-
-function renderInfoContainer2(infoContainer2, listItem, file) {
-    styleInfoContainer2(infoContainer2);
-
-    const lnkButton = document.createElement('button');
-    renderLnkButton(lnkButton, listItem, file);
-
-    const owner = document.createElement("p");
-    renderOwner(owner, file);
-
-    infoContainer2.appendChild(owner);
-    infoContainer2.appendChild(lnkButton);
-}
-
-function renderLnk(lnk, text) {
-    lnk.innerText = text;
-    lnk.style.marginLeft = '10px';
-    lnk.style.marginRight = '10px';
-}
-
-function renderList(file) {
-    const owner = document.createElement('div');
-    renderOwner(owner, file);
-    const orgName = document.createElement('div');
-    renderOrgName(orgName, file);
-    const lnk = document.createElement('div');
-    renderLnk(lnk, "Copy Link");
-    const del= document.createElement('div');
-    renderLnk(del, "Delete File")
-    const orgNameContainer = document.createElement('div');
-    const ownerContainer = document.createElement('div');
-    const lnkContainer = document.createElement('div');
-    const deleteContainer = document.createElement('div');
-    ownerContainer.style.display = 'flex';
-    ownerContainer.style.flexDirection = 'row';
-    orgNameContainer.style.display = 'flex';
-    orgNameContainer.style.flexDirection = 'row';
-    lnkContainer.style.display = 'flex';
-    lnkContainer.style.flexDirection = 'row';
-    deleteContainer.style.display = 'flex';
-    deleteContainer.style.flexDirection = 'row';
-    const userInfoButton = document.createElement('div');
-    const orgInfoButton = document.createElement('div');
-    const lnkButton = document.createElement('div');
-    const delButton = document.createElement('div');
-    renderOrgInfo(orgInfoButton);
-    renderUserInfo(userInfoButton);
-    renderLnkButton(lnkButton, file);
-    renderDelButton(delButton, file);
-
-    var list = [];
-
-    
-    if (!(`${file.owner}` === 'None' )) {
-        ownerContainer.appendChild(owner);
-        ownerContainer.appendChild(userInfoButton); 
-        
-        list.push(ownerContainer);
-
-    }
-    if (!(`${file.org}` === 'null' )) {
-        orgNameContainer.appendChild(orgName);
-        orgNameContainer.appendChild(orgInfoButton);
-        list.push(orgNameContainer);
-    }
-    lnkContainer.appendChild(lnk);
-    lnkContainer.appendChild(lnkButton);
-    list.push(lnkContainer);
-    deleteContainer.appendChild(del);
-    deleteContainer.appendChild(delButton);
-    list.push(deleteContainer);
-    
-    console.log(list);
-
-    
-    return list;
-}
-
-function renderXButton(xButton, file) {
-    styleXButton(xButton);
-    const list = renderList(file);
-    renderDropdown(list, xButton, -150, 40, 150, true);
-    // renderPopup(xButton, "Delete File", 30, 30, 80);
-    xButton.addEventListener('onclick', () => {
-        setTimeout(function() {
-            xButton.style.color = '#000';
-        }, 2000);
-    });
-    xButton.addEventListener('mouseleave', () => {
-        xButton.style.color = '#000';
-    });
-    createIco('fa-caret-right', xButton);
-}
-
-function renderInfoContainer(infoContainer, listItem, file) {
-    styleInfoContainer(infoContainer);
-
-    const xButton = document.createElement('button');
-    renderXButton(xButton, file);
-
-    const name = document.createElement('p');
-    name.textContent = file.name;
-    name.classList.add("file-name");
-    styleName(name);
-    
-    infoContainer.appendChild(name);
-    infoContainer.appendChild(xButton);
-}
-
-function renderImage(image, file) {
-    if (file.image) {
-        image.src = `data:image/png;base64,${file.image}`;
-    } else {
-        image.src = "path/to/default-placeholder.png";  // Provide a fallback image
-    }
-    image.alt = `${file.name} thumbnail`;
-    image.classList.add("file-image");
-    styleImage(image);
-}
-
-function renderListItem(listItem, file) {
-    styleListItem(listItem);
-
-    listItem.classList.add("file-item");
-
-    listItem.onclick = () => link_to_file(file.id);
-
-    listItem.addEventListener('mouseenter', () => {
-        listItem.style.boxShadow = '4px 4px 10px rgba(0,0,0,0.6)';
-    });
-    listItem.addEventListener('mouseleave', () => {
-        listItem.style.boxShadow = '4px 4px 10px rgba(0,0,0,0.3)';
-    });
-    
-    const image = document.createElement("img");
-    renderImage(image, file);
-    
-    const infoContainer = document.createElement('div');
-    renderInfoContainer(infoContainer, listItem, file);
-
-    const xButton = infoContainer.children[1];
-    xButton.addEventListener('mouseenter', () => {
-        listItem.onclick = "";
-    });
-    xButton.addEventListener('mouseleave', () => {
-        listItem.onclick = () => link_to_file(file.id);
-    });
-    listItem.appendChild(image);
-    listItem.appendChild(infoContainer);
-}
-
-function renderFileList(files) {
-    if (files === null) {
-        renderContainer.innerHTML = '';
-    } else { 
-
-        renderContainer.innerHTML = '';
-
-        files.forEach(file => {
-        
-            const listItem = document.createElement('button');
-
-            renderListItem(listItem, file);
-
-            renderContainer.appendChild(listItem);
-        });
-    }
 }

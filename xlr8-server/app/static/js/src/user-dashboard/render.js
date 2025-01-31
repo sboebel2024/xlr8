@@ -233,21 +233,6 @@ function renderXButton(xButton, file) {
     createIco('fa-caret-right', xButton);
 }
 
-function renderInfoContainer(infoContainer, listItem, file) {
-    styleInfoContainer(infoContainer);
-
-    const xButton = document.createElement('button');
-    renderXButton(xButton, file);
-
-    const name = document.createElement('p');
-    name.textContent = file.name;
-    name.classList.add("file-name");
-    styleName(name);
-    
-    infoContainer.appendChild(name);
-    infoContainer.appendChild(xButton);
-}
-
 function renderImage(image, file) {
     if (file.image) {
         image.src = `data:image/png;base64,${file.image}`;

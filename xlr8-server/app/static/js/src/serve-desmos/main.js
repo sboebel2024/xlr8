@@ -162,6 +162,8 @@ const userScript = document.getElementById('user-name');
 const user_name = JSON.parse(userScript.textContent);
 const nameScript = document.getElementById('file-name');
 const fileName = JSON.parse(nameScript.textContent);
+const orgNameScript = document.getElementById('org-name');
+const org_name = JSON.parse(orgNameScript.textContent);
 
 // Get rid of the margins
 const body = document.body;

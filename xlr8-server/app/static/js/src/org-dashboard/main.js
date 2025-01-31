@@ -10,6 +10,8 @@ const org_nameScript = document.getElementById("org-name");
 const org_name = JSON.parse(org_nameScript.textContent);
 const orgIdScript = document.getElementById("org-id");
 const orgId = JSON.parse(orgIdScript.textContent);
+const isAdminScript = document.getElementById("is-admin");
+const isAdmin = JSON.parse(isAdminScript.textContent);
 
 // Declare State Variables
 const isCards = true;
@@ -60,9 +62,9 @@ renderHeader(header, user_name, org_name);
 header.style.borderBottom = '2px solid #888';
 main.appendChild(header);
 
-const dash = document.createElement('div');
-renderDash(dash, user_name, org_name)
-main.appendChild(dash);
+// const dash = document.createElement('div');
+// renderDash(dash, user_name, org_name)
+// main.appendChild(dash);
 
 const renderContainer = document.createElement('div');
 renderContainer.innerHTML = "";

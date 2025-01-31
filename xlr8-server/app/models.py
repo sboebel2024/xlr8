@@ -5,6 +5,7 @@ import uuid
 from sqlalchemy import String
 import random
 import string
+import os
 
 # Utility functions
 def register_temp_user(ip):
@@ -16,9 +17,19 @@ def register_temp_user(ip):
 # CHANGE THIS WHEN THERE ARE MORE TYPES OF FILE ~
 # it needs to go look up where the images are for 
 # different file types
-def load_des_image():
-    with open('app/static/desmos.png', 'rb') as img_file:
+def load_image(ext):
+    filename = image_lookup_json.get(ext)
+    if not filename:
+        raise ValueError(f"No image found for extension: {ext}")
+    
+    file_path = os.path.join("app/static/images", filename)
+
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"File {file_path} not found.")
+
+    with open(file_path, "rb") as img_file:
         return img_file.read()
+    
 
 # Association tables
 managed_users_table = db.Table(
@@ -92,6 +103,10 @@ class TempUser(db.Model):
 
 # File model
 class File(db.Model):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.assign_default_image()
+
     __tablename__ = 'files'
 
     id = db.Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
@@ -101,6 +116,7 @@ class File(db.Model):
     version = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc))
     created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc), nullable=False)
     content = db.Column(db.Text, nullable=False)
+    isVisible = db.Column(db.Boolean, nullable=False, default=False)
     
     owning_user_id = db.Column(String(36), db.ForeignKey('users.id', ondelete='SET NULL'))
     org_id = db.Column(String(36), db.ForeignKey('orgs.id', ondelete='SET NULL'), nullable=True)
@@ -113,13 +129,17 @@ class File(db.Model):
 
     @validates('ext')
     def validate_ext(self, key, ext_value):
+        print(f"Validating ext: {ext_value}")  # Debugging
         if ext_value == "des" and not self.image:
-            self.image = load_des_image()
+            print("Assigning default image for 'des'")
+            self.image = load_image(ext_value)
         return ext_value
-    
+
     def assign_default_image(self):
-        if self.ext == "des" and not self.image:
-            self.image = load_des_image()
+        print(f"Checking default image for {self.ext}")  # Debugging
+        if self.ext and not self.image:
+            print(f"Assigning default image for {self.ext}")
+            self.image = load_image(self.ext)
 
 # Org model ~ Not currently being used
 class Org(db.Model):
@@ -156,6 +176,11 @@ class FileAccessLog(db.Model):
 
 ext_lookup_json = {
     "des": "serve_desmos.html",
-    "docx": "test_google.html"
+    "ovlf": "serve_overleaf.html"
+}
+
+image_lookup_json = {
+    "des": "desmos.png",
+    "ovlf": "overleaf.png"
 }
 

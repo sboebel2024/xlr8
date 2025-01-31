@@ -136,8 +136,10 @@ def get_file_data():
                     "id": file.id, 
                     "name": file.fileName, 
                     "owner": f"{file.owning_user.firstName if file.owning_user_id is not None else None}", 
+                    "ownerId": file.owning_user.id,
                     "image": base64.b64encode(file.image).decode('utf-8') if file.image else None,
-                    "org": (file.org.orgName) if (file.org) else None
+                    "org": (file.org.orgName) if (file.org) else None,
+                    "isPublic": file.isVisible
                 }
                 for file in recent_files
             ]
@@ -209,6 +211,8 @@ def access_file():
         print(content)
         fileName = file.fileName.split('.')[0]
 
+        print(template_to_run)
+
         
         isOwningUser = 1
         if (file.owning_user_id is not None):
@@ -219,8 +223,15 @@ def access_file():
                 isOwningUser = 0
 
         print(f"File ID: {file_id}")
-        
-        return render_template(template_to_run, content=content, file_id=file_id, filename=fileName, isOwningUser=isOwningUser, userFname=userFname, userid = pan_userid )
+
+        if user:
+            org = Org.query.get(user.currentOrgId)
+            orgName = org.orgName
+
+        else:
+            orgName = 'None'
+
+        return render_template(template_to_run, content=content, file_id=file_id, filename=fileName, isOwningUser=isOwningUser, userFname=userFname, userid = pan_userid, orgName=orgName )
 
     return jsonify({
         "status": "NOK", 
@@ -339,6 +350,9 @@ def create_file():
                 if org:
                     if (user not in org.users):
                         return jsonify({"status": "NOK", "message": f"User {user.firstName} not in organization {org.orgName}"}), 400
+            else:
+                org_id = user.currentOrgId
+                org = Org.query.get(org_id)
 
         if not user:
             ip = str(request.headers.get('X-Forwarded-For', request.remote_addr))
@@ -349,13 +363,11 @@ def create_file():
         file_name = data['fileName']
         image = data.get('image', None)
         content = data.get('content', None)
+        ext = data.get('type')
 
-        try:
-            base, ext = file_name.rsplit('.', 1)
-        except Exception as e:
-            return jsonify({"status": "NOK", "message": f"Filename not formatted correctly: {e}"}), 400
-              
+        print(org.orgName)
 
+        
         # return({"data":f"fileName: {file_name}, ext: {ext}, content: {content}, owning_user_id: {user_id}"})
         
         file = File(fileName=file_name, ext=ext, content=content)
@@ -373,6 +385,17 @@ def create_file():
 
         if org:
             file.org = org
+            user_treepath = (
+                db.session.query(user_org_table.c.treepath)
+                .filter(user_org_table.c.user_id == user.id)  # Replace `user.id` with the actual user ID variable
+                .filter(user_org_table.c.org_id == org.id)   # Replace `org.id` with the actual org ID variable
+                .scalar()  # Fetch the value directly
+            ) 
+
+            if user_treepath:
+                file.treepath = user_treepath
+            else:
+                file.treepath = [-1]
 
         if (not user):
             file.owning_user_id = None
@@ -446,6 +469,10 @@ def add_user_to_file():
 
     return jsonify({'status': 'OK', 'message': f'User {user.firstName} added to file {file.fileName}.'}), 200
 
-
-
+@user_dashboard_bp.route('/get-extensions', methods=['GET'])
+def get_extensions():
+    payload = jsonify({
+        'extensions': list(ext_lookup_json.keys())
+    })
+    return payload
     

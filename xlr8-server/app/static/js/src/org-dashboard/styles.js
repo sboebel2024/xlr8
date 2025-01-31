@@ -98,13 +98,6 @@ function styleLnkButton(lnkButton) {
     lnkButton.style.marginRight = '10px';
 }
 
-function styleName(name) {
-    name.style.textAlign = 'left';
-    name.style.overflow = 'hidden';
-    name.style.whiteSpace = 'nowrap';
-    name.style.textoverflow = 'ellipsis';
-}
-
 function styleInfoContainer2(infoContainer2) {
     infoContainer2.style.fontFamily = 'Arial, sans-serif';
     infoContainer2.style.fontSize = '14px';

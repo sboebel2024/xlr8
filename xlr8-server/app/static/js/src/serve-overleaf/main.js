@@ -1,3 +1,32 @@
+const contentScript = document.getElementById('content-data');
+const content = JSON.parse(contentScript.textContent);
+const fileIdScript = document.getElementById('file-id');
+const fileId = JSON.parse(fileIdScript.textContent);
+const userIdScript = document.getElementById('user-id');
+const userId = JSON.parse(userIdScript.textContent);
+const userScript = document.getElementById('user-name');
+const user_name = JSON.parse(userScript.textContent);
+const nameScript = document.getElementById('file-name');
+const fileName = JSON.parse(nameScript.textContent);
+const orgNameScript = document.getElementById('org-name');
+const org_name = JSON.parse(orgNameScript.textContent);
+
+const body = document.body;
+body.style.margin = '0px';
+body.style.height = '100%';
+
+const api_container = document.getElementById('api_container');
+styleApiContainer(api_container);
+
+iframe = document.createElement('iframe');
+iframe.style.height = '100%';
+iframe.style.width = '100%';
+iframe.src = 'http://127.0.0.1:5001/proxy'; // https://xlr8.online/proxy 
+api_container.appendChild(iframe)
+
+const header = document.getElementById('header');
+renderHeader(header);
+
 
 function renderNameForm(nameForm, fileName) {
     nameForm.type = 'text';
@@ -44,7 +73,7 @@ function renderSaveButton(saveButton, fileName, fileId) {
         renderNameTxt(nameTxt, fileName);
 
     }
-    renderPopup(saveButton, "force save", 48, 20, 80);
+    renderPopup(saveButton, "force save", 48, -80, 80);
     createIco("fa-arrow-up", saveButton);
 }
 
@@ -52,7 +81,7 @@ function renderDashboardButton(dashboardButton) {
     createIco("fa-arrow-left", dashboardButton);
     styleDashboardButton(dashboardButton);
     dashboardButton.onclick = () => linkToDashboard();
-    renderPopup(dashboardButton, "dashboard", 48, -80, 80);
+    renderPopup(dashboardButton, "dashboard", 48, 20, 80);
 }
 
 function renderHeader(header) {
@@ -104,6 +133,7 @@ function renderHeader(header) {
         renderOrgNameContainer(orgNameContainer);
         header.appendChild(orgNameContainer);
     }
+
 
     const createOrgButton = document.createElement('button');
     renderCreateOrgButton(createOrgButton);
