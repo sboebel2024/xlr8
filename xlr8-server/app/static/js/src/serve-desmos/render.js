@@ -25,6 +25,7 @@ function renderNameTxt(nameTxt, fileName) {
     nameTxt.textContent = fileName;
     nameTxt.style.width = '75px'
     nameTxt.id = 'NameTxt';
+    nameTxt.style.marginRight = '20px';
     nameTxt.style.fontFamily = 'Arial, sans-serif';
     nameTxt.style.fontSize = '18px';
     header.appendChild(nameTxt);

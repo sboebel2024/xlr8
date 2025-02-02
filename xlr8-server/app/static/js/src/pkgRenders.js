@@ -4,14 +4,6 @@ function createIco(icoClass, derivative) {
     derivative.appendChild(lnkIco);
 }
 
-document.addEventListener("DOMContentLoaded", function () {
-    if (window.jQuery) {
-        $('input[type="checkbox"]').bootstrapSwitch();
-    } else {
-        console.error("jQuery is not loaded. Make sure to include it before Bootstrap Switch.");
-    }
-});
-
 async function renderInputList() {
     const extensions = await getExtensions();
 

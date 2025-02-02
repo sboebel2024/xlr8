@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Video Stream</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mux.js/5.5.0/mux.min.js"></script>
+</head>
+<body>
+    <h2>Live Stream from FFmpeg</h2>
+    <div id="main"></div>
+    
+
+    <script>
+        
+        const user__Id = localStorage.getItem("user__Id") || generateUserId();
+        localStorage.setItem("user__Id", user__Id);
+        const uniqueTab = Math.random().toString(36).substr(2, 9);
+        const sessionId = `${user__Id}-${uniqueTab}`;
+
+        console.log(`🔗 Client connecting with sessionId: ${sessionId}`);
+
+        // Establish WebSocket connection
+        const ws = new WebSocket(`ws://localhost:8080?userId=${sessionId}`);
+
+        ws.onopen = () => {
+            console.log(`✅ WebSocket connected with sessionId: ${sessionId}`);
+        };
+
+        // Create and attach the canvas
+        const canvas = document.createElement('canvas');
+        canvas.style.width = '100%';
+        canvas.style.height = '100%';
+        const ctx = canvas.getContext('2d');
+        main.appendChild(canvas);
+        // Image streaming setup
+        let imageChunks = [];
+        let frameSize = 20;
+
+        ws.onmessage = async (event) => {
+            imageChunks.push(event.data);
+            if (imageChunks.length >= frameSize) {
+                const fullBlob = new Blob(imageChunks, { type: "image/jpeg" });
+                imageChunks = [];
+                const img = new Image();
+                img.src = URL.createObjectURL(fullBlob);
+                img.onload = () => {
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    URL.revokeObjectURL(img.src);
+                };
+            }
+        };
+
+        // ✅ **Fixed sendMessage function**
+        // function sendMessage(type, data = {}) {
+        //     if (ws.readyState === WebSocket.OPEN) {
+        //         ws.send(JSON.stringify({
+        //             type: type,
+        //             userId: sessionId,
+        //             ...data
+        //         }));
+        //     } else {
+        //         console.warn(`⚠️ WebSocket not ready. Skipping ${type} event.`);
+        //     }
+        // }
+
+        // Chromium resolution
+        const chromiumWidth = 1920;
+        const chromiumHeight = 1080;
+
+        // ✅ **Fixed event listeners to correctly pass event data**
+        document.addEventListener("mousemove", (event) => {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = chromiumWidth / rect.width;
+            const scaleY = chromiumHeight / rect.height;
+            
+            sendMessage("mousemove", {
+                x: Math.round((event.clientX - rect.left) * scaleX),
+                y: Math.round((event.clientY - rect.top) * scaleY)
+            });
+        });
+
+        document.addEventListener("mousedown", (event) => {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = chromiumWidth / rect.width;
+            const scaleY = chromiumHeight / rect.height;
+
+            sendMessage("mousedown", {
+                x: Math.round((event.clientX - rect.left) * scaleX),
+                y: Math.round((event.clientY - rect.top) * scaleY),
+                button: event.button
+            });
+        });
+
+        document.addEventListener("mouseup", (event) => {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = chromiumWidth / rect.width;
+            const scaleY = chromiumHeight / rect.height;
+
+            sendMessage("mouseup", {
+                x: Math.round((event.clientX - rect.left) * scaleX),
+                y: Math.round((event.clientY - rect.top) * scaleY),
+                button: event.button
+            });
+        });
+
+        document.addEventListener("wheel", (event) => {
+            sendMessage("scroll", { deltaY: event.deltaY });
+        });
+
+        document.addEventListener("keydown", (event) => {
+            sendMessage("keydown", { key: event.key, code: event.code });
+        });
+
+        document.addEventListener("keyup", (event) => {
+            sendMessage("keyup", { key: event.key, code: event.code });
+        });
+
+        // ✅ **Fixed resize event handling**
+        window.addEventListener("resize", () => sendResize());
+
+        function sendResize() {
+            sendMessage("resize", {
+                width: window.innerWidth,
+                height: window.innerHeight
+            });
+        }
+
+        // Generates a random user ID
+        function generateUserId() {
+            return "user_" + Math.random().toString(36);
+        }
+
+    </script>
+</body>
+</html>
