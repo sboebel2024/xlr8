@@ -1,26 +1,7 @@
 const WebSocket = require("ws");
 const { spawn, exec, execSync } = require("child_process");
 const url = require("url");
-const fs = require("fs");
 const path = require("path");
-const CDP = require('chrome-remote-interface');
-const COOKIE_STORE_PATH = path.join(__dirname, "cookies.json");
-const sqlite3 = require("sqlite3");
-
-const cookies = loadStoredCookies(); // Ensure cookies are loaded at startup
-
-
-
-function loadStoredCookies() {
-    if (!fs.existsSync(COOKIE_STORE_PATH)) {
-        return {};  // If no cookie file exists, return an empty object
-    }
-    return JSON.parse(fs.readFileSync(COOKIE_STORE_PATH, "utf8"));
-}
-
-function saveStoredCookies(storedCookies) {
-    fs.writeFileSync(COOKIE_STORE_PATH, JSON.stringify(storedCookies, null, 4));
-}
 
 const PORT = 8080;
 const wss = new WebSocket.Server({ port: PORT });
