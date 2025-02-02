@@ -141,6 +141,9 @@ function renderHeader(header) {
 
 // Hack =} ------------------------------------------------------------
 
+let length = api_container.offsetWidth;
+let height = api_container.offsetHeight;
+
 // Generate a unique user ID and session ID
 localStorage.setItem("userId", userId);
 const sessionId = `${userId}`;
@@ -148,7 +151,7 @@ const sessionId = `${userId}`;
 console.log(`🔗 Client connecting with sessionId: ${sessionId}`);
 
 // Establish WebSocket connection
-const ws = new WebSocket(`ws://localhost:8080?userId=${sessionId}`);
+const ws = new WebSocket(`ws://localhost:8080?userId=${sessionId}&length=${length}&height=${height}`);
 
 ws.onopen = () => {
     console.log(`✅ WebSocket connected with sessionId: ${sessionId}`);
@@ -166,7 +169,7 @@ let lastTimestamp = 0;
 let lastChunkTime = performance.now();
 let lastFrameProcessedTime = performance.now();
 let imageChunks = [];
-let frameSize = 4;
+let frameSize = 2;
 let lastBlobURL = null;
 let isProcessingFrame = false; // Processing lock
 let pendingChunks = []; 
@@ -278,8 +281,8 @@ function sendMessage(type, data = {}) {
 }
 
 // Chromium resolution
-const chromiumWidth = 1920;
-const chromiumHeight = 1080;
+const chromiumWidth = length;
+const chromiumHeight = height;
 
 // ✅ **Fixed event listeners to correctly pass event data**
 document.addEventListener("mousemove", (event) => {
