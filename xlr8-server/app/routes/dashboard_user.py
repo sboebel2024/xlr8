@@ -231,7 +231,9 @@ def access_file():
         else:
             orgName = 'None'
 
-        return render_template(template_to_run, content=content, file_id=file_id, filename=fileName, isOwningUser=isOwningUser, userFname=userFname, userid = pan_userid, orgName=orgName )
+        fileOvlfStr = "None"
+
+        return render_template(template_to_run, content=content, file_id=file_id, filename=fileName, isOwningUser=isOwningUser, userFname=userFname, userid = pan_userid, orgName=orgName, fileOvlfStr=fileOvlfStr )
 
     return jsonify({
         "status": "NOK", 

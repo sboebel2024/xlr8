@@ -42,6 +42,9 @@
     <script id="org-name" type="application/json">
         {{ orgName | tojson | safe }} 
     </script>
+    <script id="file-ovlf-str" type="application/json">
+        {{ fileOvlfStr | tojson | safe }} 
+    </script>
     
     
     <script src="{{ url_for('static', filename='js/src/pkgFunctions.js')}}"></script>

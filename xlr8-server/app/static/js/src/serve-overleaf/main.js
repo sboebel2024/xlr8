@@ -10,6 +10,10 @@ const nameScript = document.getElementById('file-name');
 const fileName = JSON.parse(nameScript.textContent);
 const orgNameScript = document.getElementById('org-name');
 const org_name = JSON.parse(orgNameScript.textContent);
+const fileOvlfStrScript = document.getElementById('file-ovlf-str');
+const fileOvlfStr = JSON.parse(fileOvlfStrScript.textContent);
+
+const file = fileOvlfStr
 
 const body = document.body;
 body.style.margin = '0px';
@@ -150,8 +154,9 @@ const sessionId = `${userId}`;
 
 console.log(`🔗 Client connecting with sessionId: ${sessionId}`);
 
+const wsPath = "wss://xlr8.online/ws";
 // Establish WebSocket connection
-const ws = new WebSocket(`ws://localhost:8080?userId=${sessionId}&length=${length}&height=${height}`);
+const ws = new WebSocket(`${wsPath}?userId=${sessionId}&length=${length}&height=${height}&file=${file}`);
 
 ws.onopen = () => {
     console.log(`✅ WebSocket connected with sessionId: ${sessionId}`);
@@ -169,7 +174,7 @@ let lastTimestamp = 0;
 let lastChunkTime = performance.now();
 let lastFrameProcessedTime = performance.now();
 let imageChunks = [];
-let frameSize = 2;
+let frameSize = 4;
 let lastBlobURL = null;
 let isProcessingFrame = false; // Processing lock
 let pendingChunks = []; 
