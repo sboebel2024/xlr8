@@ -1,18 +1,16 @@
-FROM ubuntu:22.04
+FROM ubuntu:20.04 
 
-# Install Node.js (since we removed the default Node.js image)
+# Install Node.js 18
 RUN apt update && apt install -y curl && \
     curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
     apt install -y nodejs
 
-# Install Ubuntu 22.04 versions of Chromium and other dependencies
-RUN apt update && apt install -y \
-    xvfb \
-    fluxbox \
-    xdotool \
-    ffmpeg
+# Install dependencies
+RUN apt install -y xvfb fluxbox xdotool ffmpeg
 
-RUN snap install chromium
+RUN apt update && apt install -y software-properties-common && \
+    add-apt-repository ppa:saiarcot895/chromium-beta && \
+    apt update && apt install -y chromium-browser
 
 WORKDIR /app
 

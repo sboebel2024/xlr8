@@ -71,6 +71,7 @@ function setupUserSession(userId, ws, length, height, file) {
     const rdp = 9222 + (displayNumber - 1000);
 
     let chromiumArgs = [
+        "--no-sandbox",
         `--remote-debugging-port=${rdp}`,
         "--remote-debugging-address=0.0.0.0",
         `--window-size=${length},${height}`,
@@ -81,7 +82,7 @@ function setupUserSession(userId, ws, length, height, file) {
         `https://www.overleaf.com/project${filePath}`
     ];
 
-    const chromiumPath = "/snap/bin/chromium";
+    const chromiumPath = "/usr/bin/chromium-browser";
 
     let chromium = spawn(chromiumPath, chromiumArgs, { env: { ...process.env, DISPLAY: display } });
     
