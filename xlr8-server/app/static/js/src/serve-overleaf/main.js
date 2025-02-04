@@ -154,7 +154,7 @@ const sessionId = `${userId}`;
 
 console.log(`🔗 Client connecting with sessionId: ${sessionId}`);
 
-const wsPath = "wss://xlr8.online/ws";
+const wsPath = "wss://xlr8.online/ws/";
 // Establish WebSocket connection
 const ws = new WebSocket(`${wsPath}?userId=${sessionId}&length=${length}&height=${height}&file=${file}`);
 

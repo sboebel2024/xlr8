@@ -77,12 +77,11 @@ function setupUserSession(userId, ws, length, height, file) {
         `--user-data-dir=${userProfile}`,
         "--start-fullscreen",
         "--disable-usb-keyboard-detect",
-        "--load-extension=cookie_modifier",
         "--disable-gpu",
         `https://www.overleaf.com/project${filePath}`
     ];
 
-    const chromiumPath = process.env.CHROMIUM_PATH || "/usr/bin/chromium-browser";
+    const chromiumPath = "/snap/bin/chromium";
 
     let chromium = spawn(chromiumPath, chromiumArgs, { env: { ...process.env, DISPLAY: display } });
     

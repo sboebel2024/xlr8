@@ -75,4 +75,4 @@ if __name__ == '__main__':
 
     # Run the app (Ec2 uses Nginx reverse proxy to serve https)
     print("Flask app starting...")
-    socketio.run(app, host="0.0.0.0", port=5000, debug=True)
+    socketio.run(app, host="0.0.0.0", port=5000, debug=True, use_reloader=False)
