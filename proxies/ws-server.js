@@ -5,6 +5,7 @@ const path = require("path");
 const os = require("os");
 const express = require("express");
 const { appendFile } = require("fs");
+const fs = require("fs");
 const app = express();
 
 const homeDir = os.homedir();
@@ -56,7 +57,7 @@ function setupUserSession(userId, ws, length, height, file) {
     console.log(`🖥️  Fluxbox started on ${display}`);
 
     // Unique Chromium user profile
-    const USER_PROFILES_DIR = "/home/sdatnmdt/xlr8/proxies/cookies/user-profiles"
+    const USER_PROFILES_DIR = "/app/cookies/user-profiles"
     const userProfile = path.join(USER_PROFILES_DIR, `chromium-${userId}`);
     console.log(`Expected Profile Path: ${USER_PROFILES_DIR}`);
     console.log(`Final User Profile Path: ${userProfile}`);
@@ -69,6 +70,13 @@ function setupUserSession(userId, ws, length, height, file) {
     // ✅ Ensure Default directory exists
     const displayNumber = parseInt(display.replace(":", ""), 10);
     const rdp = 9222 + (displayNumber - 1000);
+
+    try {
+        execSync(`rm -rf ${userProfile}/SingletonLock ${userProfile}/SingletonSocket ${userProfile}/SingletonCookie`);
+        console.log(`✅ Forced unlock of Chromium profile: ${userProfile}`);
+    } catch (error) {
+        console.error(`❌ Could not remove lock files`, error);
+    }
 
     let chromiumArgs = [
         "--no-sandbox",

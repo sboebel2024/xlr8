@@ -26,10 +26,17 @@ services:
       - app_network
     volumes:
       - ./proxies:/app
-      - /app/node_modules
+      - node_modules:/app/node_modules
       - ./proxies/cookies/user-profiles:/app/cookies/user-profiles
+    shm_size: '2g'
+
+
       
 networks:
   app_network:
     driver: bridge
+
+volumes:
+  node_modules:
+
     
