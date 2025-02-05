@@ -65,16 +65,50 @@ function renderNameTxt(nameTxt, fileName) {
     header.appendChild(nameTxt);
 }
 
-function renderSaveButton(saveButton, fileName, fileId) {
+function renderSaveButtonOvlf(saveButton, fileName, fileId) {
     styleSaveButton(saveButton);
     const isOwningUser = parseInt(document.getElementById("is-owning-user").textContent, 10);
     if (isOwningUser === 1) {
-        saveButton.onclick = () => editFileContent(fileId, JSON.stringify(calculator.getState()), nameForm.value);
+        saveButton.onclick = async () => {
+            let url;
+            try {
+                let response = await fetch(`https://xlr8.online/get-filename/get-overleaf-url/${userId}`);
+
+                if (!response.ok) {
+                    console.error(`Response NOK: ${response}`);
+                }
+
+                const data = await response.json();
+                url = data.overleafUrl;
+            } catch (error) {
+                console.error(`Error fetching: ${error}`);
+            }
+
+            editFileContent(fileId, JSON.stringify(url), nameForm.value);
+        };
         const nameForm = document.createElement('input');
         renderNameForm(nameForm, fileName);
 
     } else {
-        saveButton.onclick = () => editFileContent(fileId, JSON.stringify(calculator.getState()), nameTxt.textContent);
+        saveButton.onclick = async () => {
+            let url;
+            try {
+                let response = await fetch(`https://xlr8.online/get-filename/get-overleaf-url/${userId}`);
+
+                if (!response.ok) {
+                    console.error(`Response NOK: ${response}`);
+                }
+
+                const data = await response.json();
+                url = data.overleafUrl;
+            } catch (error) {
+                console.error(`Error fetching: ${error}`);
+            }
+
+            editFileContent(fileId, JSON.stringify(url), nameForm.value);
+        };
+        const nameForm = document.createElement('input');
+        renderNameForm(nameForm, fileName);
         const nameTxt = document.createElement('p');
         renderNameTxt(nameTxt, fileName);
 
@@ -106,7 +140,7 @@ function renderHeader(header) {
     header.appendChild(pathLogo);
 
     const saveButton = document.createElement('button');
-    renderSaveButton(saveButton, fileName, fileId);
+    renderSaveButtonOvlf(saveButton, fileName, fileId);
     header.appendChild(saveButton);
 
     userNameContainer = document.createElement('button');

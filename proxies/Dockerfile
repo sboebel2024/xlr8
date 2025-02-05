@@ -22,4 +22,6 @@ COPY . .
 
 EXPOSE 9090
 
+EXPOSE 3000
+
 CMD ["node", "ws-server.js"]

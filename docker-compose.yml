@@ -22,6 +22,7 @@ services:
     restart: always
     ports:
       - "9090:9090"
+      - "3000:3000"
     networks:
       - app_network
     volumes:

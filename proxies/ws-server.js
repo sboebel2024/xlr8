@@ -31,11 +31,16 @@ function getAvailableDisplay() {
 
 function setupUserSession(userId, ws, length, height, file) {
 
+    let display;
+
     if (users[userId]) {
         users[userId].ffmpeg.kill();
         users[userId].xvfb.kill();
         users[userId].chromium.kill();
         console.log(`🛑 Stopping session for user ${userId}`);
+        display = users[userId].display;
+    } else {
+        display = getAvailableDisplay();
     }
     
     let filePath;
@@ -48,7 +53,7 @@ function setupUserSession(userId, ws, length, height, file) {
 
     console.log(`filePath: ${filePath}`);
 
-    const display = getAvailableDisplay();
+    
     console.log(`🚀 Starting session for user ${userId} on ${display}`);
 
     let xvfb = spawn("Xvfb", [display, "-screen", "0", `${length}x${height}x24`, "-ac"]);
@@ -166,33 +171,41 @@ setInterval(() => {
 
 async function getUserPage(userId) {
     if (!users[userId]) {
-        console.error(`User ${userId} not found`);
-        return;
+        console.error(`❌ User ${userId} not found`);
+        return null; // Ensure function returns a value
     }
 
-    const { rdp } = users[userId];
+    const { rdp } = users[userId]; // Remote Debugging Port
 
     try {
         const response = await fetch(`http://localhost:${rdp}/json`);
         const pages = await response.json();
 
-        const overleafPage = pages.find(page => 
-            page.url.includes("overleaf") || (page.title && page.title.includes("Overleaf"))
-        );
+        if (!Array.isArray(pages)) {
+            console.error("❌ Unexpected response format:", pages);
+            return null;
+        }
+
+        // ✅ Improved filtering logic
+        const overleafPage = pages.find(page => {
+            if (!page.url) return false;
+            return page.url.startsWith("https://www.overleaf.com/project/");
+        });
 
         if (overleafPage) {
-            console.log(`User ${userId} is viewing Overleaf: ${overleafPage.url}`);
+            console.log(`✅ User ${userId} is viewing Overleaf: ${overleafPage.url}`);
             return overleafPage.url;
         } else {
-            console.error("No Overleaf page found.");
+            console.warn(`⚠️ No valid Overleaf project found for user ${userId}`);
             return null;
         }
 
     } catch (error) {
-        console.error("Error fetching page data:", error);
+        console.error(`❌ Error fetching page data for user ${userId}:`, error);
         return null;
     }
 }
+
 
 app.get("/get-overleaf-url/:userId", async (req, res) => {
     const userId = req.params.userId;
