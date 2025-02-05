@@ -15,6 +15,9 @@ const fileOvlfStr = JSON.parse(fileOvlfStrScript.textContent);
 
 const file = fileOvlfStr
 
+let lastWidth = window.innerWidth;
+let lastHeight = window.innerHeight;
+
 const body = document.body;
 body.style.margin = '0px';
 body.style.height = '100%';
@@ -252,7 +255,7 @@ ws.onmessage = async (event) => {
                 
                 console.log(`✅ Frame processed in ${frameProcessingTime.toFixed(3)}ms`);
                 console.log(`🔵 Frame interval: ${frameInterval.toFixed(3)}ms`);
-                //console.log(`✅ Frames Processed: ${counter}`);
+                console.log(`✅ Frames Processed: ${counter}`);
 
                 isProcessingFrame = false;
 
@@ -326,7 +329,7 @@ document.addEventListener("mouseup", (event) => {
 });
 
 document.addEventListener("wheel", (event) => {
-    sendMessage("scroll", { deltaY: event.deltaY });
+    sendMessage("scroll", { deltaY: event.deltaY*0.5, deltaX: event.deltaX*0.5 });
 });
 
 document.addEventListener("keydown", (event) => {
@@ -338,16 +341,27 @@ document.addEventListener("keyup", (event) => {
 });
 
 // ✅ **Fixed resize event handling**
-window.addEventListener("resize", () => sendResize());
-
-function sendResize() {
-    sendMessage("resize", {
-        width: window.innerWidth,
-        height: window.innerHeight
-    });
-}
+window.addEventListener("resize", () => {
+    clearTimeout(window.resizeTimeout);
+    window.resizeTimeout = setTimeout(checkResize, 200); // Debounce to prevent spam
+});
 
 // Generates a random user ID
 function generateUserId() {
     return "user_" + Math.random().toString(36);
+}
+
+function checkResize() {
+    const newWidth = window.innerWidth;
+    const newHeight = window.innerHeight;
+
+    // Calculate the % change
+    const widthChange = Math.abs(newWidth - lastWidth) / lastWidth;
+    const heightChange = Math.abs(newHeight - lastHeight) / lastHeight;
+
+    // If size change > 33%, reload the page
+    if (widthChange > 0.33 || heightChange > 0.33) {
+        console.log("🔄 Resizing exceeded 33%, reloading page...");
+        window.location.reload();
+    }
 }

@@ -32,9 +32,10 @@ function getAvailableDisplay() {
 function setupUserSession(userId, ws, length, height, file) {
 
     if (users[userId]) {
-        console.log(`♻️ Resuming existing session for ${userId}`);
-        users[userId].ws = ws;
-        return users[userId];
+        users[userId].ffmpeg.kill();
+        users[userId].xvfb.kill();
+        users[userId].chromium.kill();
+        console.log(`🛑 Stopping session for user ${userId}`);
     }
     
     let filePath;
@@ -113,7 +114,7 @@ function setupUserSession(userId, ws, length, height, file) {
         console.log(`🎥 Starting FFmpeg for user ${userId}`);
         let ffmpeg = spawn("ffmpeg", [
             "-f", "x11grab",
-            "-framerate", "20",
+            "-framerate", "30",
             "-draw_mouse", "0",
             "-s", `${length}x${height}`,
             "-i", display,
@@ -121,7 +122,6 @@ function setupUserSession(userId, ws, length, height, file) {
             "-crf", "17",
             "-q:v", "7",
             "-update", "1",
-            "-rtbufsize", "100M",
             "-vsync", "cfr",
             "-f", "mjpeg",
             "pipe:1"
@@ -219,14 +219,9 @@ wss.on("connection", (ws, req) => {
 
     console.log(`🔗 Connected user ${userId}`);
 
-    if (users[userId]) {
-        users[userId].ws = ws;  // Reconnect WebSocket
-        console.log(`♻️ Reconnecting existing session for ${userId}`);
-    } else {
-        // Start a new session only if the user doesn't already have one
-        users[userId] = setupUserSession(userId, ws, length, height, file);
-        console.log(`✅ Successfully started session for ${userId}`);
-    }
+    // Start a new session only if the user doesn't already have one
+    users[userId] = setupUserSession(userId, ws, length, height, file);
+    console.log(`✅ Successfully started session for ${userId}`);
 
     ws.on("message", (message) => {
         
@@ -243,13 +238,13 @@ wss.on("connection", (ws, req) => {
         // Activate the correct Chromium window
         exec(`DISPLAY=${display} xdotool getactivewindow`, (err, stdout) => {
             if (err || !stdout.trim()) {
-                console.error(`❌ Failed to find Chromium window for ${display}: ${err}`);
+                //console.error(`❌ Failed to find Chromium window for ${display}: ${err}`);
                 return;
             }
             const windowId = stdout.trim().split("\n")[0]; // Use the first matching window ID
             //console.log(`✅ Found Chromium window ${windowId} for ${display}`);
 
-            console.log(`User Event @ Display ${display} w/ ID ${windowId}: ${message}`);
+            //console.log(`User Event @ Display ${display} w/ ID ${windowId}: ${message}`);
 
             let key = event.key;
             const keyMap = {
@@ -283,6 +278,7 @@ wss.on("connection", (ws, req) => {
                 exec(`DISPLAY=${display} xdotool windowactivate ${windowId} keyup ${key}`);
             }
 
+
             switch (event.type) {
                 case "mousemove":
                     exec(`DISPLAY=${display} xdotool mousemove --window ${windowId} ${Math.round(event.x)} ${Math.round(event.y)}`);
@@ -303,6 +299,7 @@ wss.on("connection", (ws, req) => {
                         exec(`DISPLAY=${display} xdotool click --window ${windowId} 4`); // Scroll up
                     }
                     break;
+
 
             }
         });
