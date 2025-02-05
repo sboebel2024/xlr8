@@ -114,19 +114,20 @@ function setupUserSession(userId, ws, length, height, file) {
         console.log(`🎥 Starting FFmpeg for user ${userId}`);
         let ffmpeg = spawn("ffmpeg", [
             "-f", "x11grab",
-            "-framerate", "30",
+            "-framerate", "40",
             "-draw_mouse", "0",
             "-s", `${length}x${height}`,
             "-i", display,
             "-vf", "format=yuv420p",
             "-crf", "17",
-            "-q:v", "7",
+            "-q:v", "5",
             "-update", "1",
+            "-rtbufsize", "100M",
             "-vsync", "cfr",
             "-f", "mjpeg",
             "pipe:1"
         ]);
-
+// sample
         console.log(`FFmpeg started with size ${length}x${height},`);
 
         ffmpeg.stdout.on("data", (data) => {
