@@ -67,43 +67,42 @@ async function fetchFileDataOrgs(isCards) {
 }
 
 async function createFile(type, fileName) {
-    // CHANGE THIS --> get from dictionary in models
-    if (type === 'des') {
-        try {
-            const requestBody = {
-                fileName: fileName,
-                content: ""
-            };
+    try {
+        const requestBody = {
+            fileName: fileName,
+            type: type,
+            content: ""
+        };
 
-            const response = await fetch('/user-dashboard/create-file', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(requestBody)
-            });
+        const response = await fetch('/user-dashboard/create-file', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestBody)
+        });
 
-            if (!response.ok) {
-                throw new Error(`Failed to create file: ${response.status} - ${response.statusText}`);
-            }
-
-            const data = await response.json();
-
-            updateFileList(isCards);
-
-            if (data.status === "OK") {
-                console.log('File created successfully:', data.file);
-                return data.file; // Return the created file object
-            } else {
-                console.error('Error creating file:', data.message);
-                return null;
-            }
-
-        } catch (error) {
-            console.error('Error creating file:', error);
+        if (!response.ok) {
+            throw new Error(`Failed to create file: ${response.status} - ${response.statusText}`);
         }
+
+        const data = await response.json();
+
+        updateFileList(isCards);
+
+        if (data.status === "OK") {
+            console.log('File created successfully:', data.file);
+            return data.file; // Return the created file object
+        } else {
+            console.error('Error creating file:', data.message);
+            return null;
+        }
+
+    } catch (error) {
+        console.error('Error creating file:', error);
     }
 }
+
 
 
 async function delete_file(file_id) {

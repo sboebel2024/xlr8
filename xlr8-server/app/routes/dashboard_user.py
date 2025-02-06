@@ -6,6 +6,9 @@ import requests
 from sqlalchemy import or_
 from flask_socketio import SocketIO, join_room, leave_room, emit
 import base64
+import sys
+
+sys.stdout.flush()
 
 
 user_dashboard_bp = Blueprint('user_dashboard', __name__)
@@ -231,9 +234,14 @@ def access_file():
         else:
             orgName = 'None'
 
-        fileOvlfStr = "None"
+        print(f'OUID: {file.owning_user_id}')
 
-        return render_template(template_to_run, content=content, file_id=file_id, filename=fileName, isOwningUser=isOwningUser, userFname=userFname, userid = pan_userid, orgName=orgName, fileOvlfStr=fileOvlfStr )
+        ouid = file.owning_user_id
+
+        print(ouid)
+
+
+        return render_template(template_to_run, content=content, file_id=file_id, filename=fileName, isOwningUser=isOwningUser, userFname=userFname, userid = pan_userid, orgName=orgName, owningUserId=ouid)
 
     return jsonify({
         "status": "NOK", 
@@ -255,6 +263,7 @@ def edit_file():
     Returns:
         json := data about changed file
     """
+    print("EDITING FILE CONTENT...")
     data = request.get_json()
     
     if not data or 'file_id' not in data:
@@ -277,6 +286,8 @@ def edit_file():
     newFileName = data.get('newFileName', None)
     newOwnerId = data.get('newOwnerId', None)
 
+    print(newFileName)
+
     if newFileName:
         try:
             base, newExt = newFileName.rsplit('.', 1)
@@ -295,8 +306,8 @@ def edit_file():
         if newOwner not in file.users:
             file.users.append(newOwner)
     
-    if data.get('content'):
-        file.content = data.get('content', None)
+    file.content = data.get('content', None)
+    print(f'Content Edited for {file.fileName}: {file.content}')
 
     try:
         db.session.commit()
@@ -367,21 +378,27 @@ def create_file():
         content = data.get('content', None)
         ext = data.get('type')
 
-        print(org.orgName)
+        print(f'Org: {org.orgName}')
+        print(f'Ext: {ext}')
 
         
         # return({"data":f"fileName: {file_name}, ext: {ext}, content: {content}, owning_user_id: {user_id}"})
         
         file = File(fileName=file_name, ext=ext, content=content)
 
+        db.session.add(file)
+
         # Assign additional attributes
         if image:
             file.image = image
 
         Id = None
+        print(f'User: {user.id}')
 
         if user:
+            print('Executing:')
             file.owning_user_id = user_id
+            print(f'OUID: {file.owning_user_id}')
             file.users.append(user)  # Assign the current user to the file
             Id = user_id
 
@@ -416,6 +433,7 @@ def create_file():
                 "message": f"An error occurred while committing the file: {str(e)}"
             }), 500
 
+        print(file.owning_user_id)
         return jsonify({
             "status": "OK",
             "message": "File created successfully!",

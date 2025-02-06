@@ -12,7 +12,10 @@ const homeDir = os.homedir();
 
 const PORT = 9090;
 const CURL_PORT = 3000;
-const wss = new WebSocket.Server({ port: PORT });
+const wss = new WebSocket.Server({ 
+    port: PORT, 
+    maxPayload: 32 * 1024 * 1024
+});
 const users = {}; // Stores active user sessions
 const usedDisplays = new Set();
 
@@ -46,9 +49,9 @@ function setupUserSession(userId, ws, length, height, file) {
     let filePath;
 
     if ((!file) || (file === "None")) {
-        filePath = '';
+        filePath = 'https://overleaf.com/project';
     } else {
-        filePath = `/${file}`;
+        filePath = file;
     }
 
     console.log(`filePath: ${filePath}`);
@@ -84,8 +87,13 @@ function setupUserSession(userId, ws, length, height, file) {
         console.error(`❌ Could not remove lock files`, error);
     }
 
+    console.log(`${filePath}`);
+
     let chromiumArgs = [
         "--no-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-infobars",
+        "--test-type",
         `--remote-debugging-port=${rdp}`,
         "--remote-debugging-address=0.0.0.0",
         `--window-size=${length},${height}`,
@@ -93,7 +101,7 @@ function setupUserSession(userId, ws, length, height, file) {
         "--start-fullscreen",
         "--disable-usb-keyboard-detect",
         "--disable-gpu",
-        `https://www.overleaf.com/project${filePath}`
+        `${filePath}`
     ];
 
     const chromiumPath = "/usr/bin/chromium-browser";
@@ -123,26 +131,31 @@ function setupUserSession(userId, ws, length, height, file) {
             "-draw_mouse", "0",
             "-s", `${length}x${height}`,
             "-i", display,
-            "-vf", "format=yuv420p",
+            "-vf", "format=rgb24",
             "-crf", "17",
-            "-q:v", "5",
+            "-q:v", "8",
             "-update", "1",
-            "-rtbufsize", "100M",
+            "-rtbufsize", "64M",
+            "-preset", "slow",
+            "-chunk_size", "128000",
             "-vsync", "cfr",
             "-f", "mjpeg",
             "pipe:1"
         ]);
+        
+        
 // sample
         console.log(`FFmpeg started with size ${length}x${height},`);
 
         ffmpeg.stdout.on("data", (data) => {
             if (users[userId]?.ws?.readyState === WebSocket.OPEN) {
-                users[userId].ws.send(data);
+                users[userId].ws.send(data, { fragmentOutgoingMessages: false });
+                //users[userId].ws.send(Buffer.alloc(2 * 1024 * 1024), { fragmentOutgoingMessages: false }); // TEST
             }
         });
 
         ffmpeg.stderr.on("data", (data) => {
-            //console.error(`FFmpeg Error [User ${userId}]: ${data.toString()}`);
+            console.error(`FFmpeg Error [User ${userId}]: ${data.toString()}`);
         });
 
         ffmpeg.on("close", (code) => {
@@ -205,6 +218,9 @@ async function getUserPage(userId) {
         return null;
     }
 }
+
+let scrollYBuffer = 0;
+let scrollXBuffer = 0;
 
 
 app.get("/get-overleaf-url/:userId", async (req, res) => {
@@ -306,13 +322,44 @@ wss.on("connection", (ws, req) => {
                     break;
 
 
-                case "scroll":
-                    if (event.deltaY > 0) {
-                        exec(`DISPLAY=${display} xdotool click --window ${windowId} 5`); // Scroll down
-                    } else {
-                        exec(`DISPLAY=${display} xdotool click --window ${windowId} 4`); // Scroll up
-                    }
-                    break;
+                    case "scroll":
+                        const scrollThreshold = 50; // Adjust for how much scroll is needed before action
+                        let accumulatedScrollY = (globalThis.accumulatedScrollY || 0) + event.deltaY;
+                        let accumulatedScrollX = (globalThis.accumulatedScrollX || 0) + event.deltaX;
+                    
+                        // Vertical scrolling
+                        while (Math.abs(accumulatedScrollY) >= scrollThreshold) {
+                            const direction = accumulatedScrollY > 0 ? 5 : 4; // 5 = Down, 4 = Up
+                            exec(`DISPLAY=${display} xdotool click --window ${windowId} ${direction}`);
+                            accumulatedScrollY -= Math.sign(accumulatedScrollY) * scrollThreshold; // Reduce accumulated scroll
+                        }
+                    
+                        // Horizontal scrolling (if needed)
+                        while (Math.abs(accumulatedScrollX) >= scrollThreshold) {
+                            const direction = accumulatedScrollX > 0 ? 7 : 6; // 7 = Right, 6 = Left
+                            exec(`DISPLAY=${display} xdotool click --window ${windowId} ${direction}`);
+                            accumulatedScrollX -= Math.sign(accumulatedScrollX) * scrollThreshold; // Reduce accumulated scroll
+                        }
+                    
+                        // Store accumulated values globally for next scroll event
+                        globalThis.accumulatedScrollY = accumulatedScrollY;
+                        globalThis.accumulatedScrollX = accumulatedScrollX;
+                        break;
+
+                // case "scroll":
+                //     if (event.deltaY > 0) {
+                //         exec(`DISPLAY=${display} xdotool click --window ${windowId} 5`); // Scroll down
+                //     } else if (event.deltaY < 0) {
+                //         exec(`DISPLAY=${display} xdotool click --window ${windowId} 4`); // Scroll up
+                //     }
+
+                //     if (event.deltaX > 0) {
+                //         exec(`DISPLAY=${display} xdotool click --window ${windowId} 7`); // Scroll right (if supported)
+                //     } else if (event.deltaX < 0) {
+                //         exec(`DISPLAY=${display} xdotool click --window ${windowId} 6`); // Scroll left (if supported)
+                //     }
+                //     break;
+
 
 
             }

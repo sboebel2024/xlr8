@@ -49,19 +49,13 @@ function renderSaveButton(saveButton, fileName, fileId) {
     createIco("fa-arrow-up", saveButton);
 }
 
-function renderDashboardButton(dashboardButton) {
-    createIco("fa-arrow-left", dashboardButton);
-    styleDashboardButton(dashboardButton);
-    dashboardButton.onclick = () => linkToDashboard();
-    renderPopup(dashboardButton, "dashboard", 48, -80, 80);
-}
-
 function renderHeader(header) {
     styleHeader(header);
 
     const logo = document.createElement('div');
     styleLogo(logo);
     logo.addEventListener('mousedown', () => {
+        editFileContent(fileId, JSON.stringify(calculator.getState()), nameTxt.textContent)
         linkToDashboard();
     });
     header.appendChild(logo);

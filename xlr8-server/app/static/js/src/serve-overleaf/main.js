@@ -10,10 +10,8 @@ const nameScript = document.getElementById('file-name');
 const fileName = JSON.parse(nameScript.textContent);
 const orgNameScript = document.getElementById('org-name');
 const org_name = JSON.parse(orgNameScript.textContent);
-const fileOvlfStrScript = document.getElementById('file-ovlf-str');
-const fileOvlfStr = JSON.parse(fileOvlfStrScript.textContent);
-
-const file = fileOvlfStr
+const owningUserIdScript = document.getElementById('owning-user-id');
+const owningUserId = JSON.parse(owningUserIdScript.textContent);
 
 let lastWidth = window.innerWidth;
 let lastHeight = window.innerHeight;
@@ -21,6 +19,7 @@ let lastHeight = window.innerHeight;
 const body = document.body;
 body.style.margin = '0px';
 body.style.height = '100%';
+body.style.overflow = 'hidden';
 
 const api_container = document.getElementById('api_container');
 styleApiContainer(api_container);
@@ -70,7 +69,7 @@ function renderSaveButtonOvlf(saveButton, fileName, fileId) {
     const isOwningUser = parseInt(document.getElementById("is-owning-user").textContent, 10);
     if (isOwningUser === 1) {
         saveButton.onclick = async () => {
-            let url;
+           
             try {
                 let response = await fetch(`https://xlr8.online/get-filename/get-overleaf-url/${userId}`);
 
@@ -79,19 +78,18 @@ function renderSaveButtonOvlf(saveButton, fileName, fileId) {
                 }
 
                 const data = await response.json();
-                url = data.overleafUrl;
+                const url = data.overleafUrl;
+                editFileContentOvlf(fileId, url, nameForm.value, 'ovlf');
             } catch (error) {
                 console.error(`Error fetching: ${error}`);
             }
 
-            editFileContent(fileId, JSON.stringify(url), nameForm.value);
         };
         const nameForm = document.createElement('input');
         renderNameForm(nameForm, fileName);
 
     } else {
         saveButton.onclick = async () => {
-            let url;
             try {
                 let response = await fetch(`https://xlr8.online/get-filename/get-overleaf-url/${userId}`);
 
@@ -100,12 +98,12 @@ function renderSaveButtonOvlf(saveButton, fileName, fileId) {
                 }
 
                 const data = await response.json();
-                url = data.overleafUrl;
+                const url = data.overleafUrl;
+                editFileContentOvlf(fileId, data, nameForm.value, 'ovlf');
+                
             } catch (error) {
                 console.error(`Error fetching: ${error}`);
             }
-
-            editFileContent(fileId, JSON.stringify(url), nameForm.value);
         };
         const nameForm = document.createElement('input');
         renderNameForm(nameForm, fileName);
@@ -181,19 +179,22 @@ function renderHeader(header) {
 }
 
 // Hack =} ------------------------------------------------------------
-
 let length = api_container.offsetWidth;
 let height = api_container.offsetHeight;
 
 // Generate a unique user ID and session ID
-localStorage.setItem("userId", userId);
-const sessionId = `${userId}`;
+//localStorage.setItem("userId", owningUserId);
+const sessionId = `${owningUserId}`;
 
 console.log(`🔗 Client connecting with sessionId: ${sessionId}`);
 
 const wsPath = "wss://xlr8.online/ws/";
+//const wsPath = "ws://localhost:9090/"; //Use for localhost testing
 // Establish WebSocket connection
-const ws = new WebSocket(`${wsPath}?userId=${sessionId}&length=${length}&height=${height}&file=${file}`);
+const ws = new WebSocket(`${wsPath}?userId=${sessionId}&length=${length}&height=${height}&file=${content}`, [], {
+    maxReceivedMessageSize: 1024 * 1024, // 512MB
+    fragmentOutgoingMessages: false
+});
 
 ws.onopen = () => {
     console.log(`✅ WebSocket connected with sessionId: ${sessionId}`);
@@ -211,7 +212,13 @@ let lastTimestamp = 0;
 let lastChunkTime = performance.now();
 let lastFrameProcessedTime = performance.now();
 let imageChunks = [];
-let frameSize = 2;
+let frameSize;
+if (length*width < 1356000) {
+    frameSize = 2;
+} else {
+    frameSize = 4;
+}
+
 let lastBlobURL = null;
 let isProcessingFrame = false; // Processing lock
 let pendingChunks = []; 
@@ -247,7 +254,7 @@ ws.onmessage = async (event) => {
     }
     imageChunks.push(event.data);
 
-    console.log(`🟡 Chunk received. Count: ${imageChunks.length}, Time since last: ${timeSinceLastChunk.toFixed(3)}ms`);
+    console.log(`🟡 Chunk received. Count: ${imageChunks.length}, Time since last: ${timeSinceLastChunk.toFixed(3)}ms, Size: ${event.data.size} bits`);
     
 
 
@@ -363,8 +370,21 @@ document.addEventListener("mouseup", (event) => {
 });
 
 document.addEventListener("wheel", (event) => {
-    sendMessage("scroll", { deltaY: event.deltaY*0.5, deltaX: event.deltaX*0.5 });
+    event.preventDefault();
+
+    // Adjust scroll speed (lower values slow it down)
+    const scrollFactor = 0.5;
+
+    window.scrollBy({
+        left: event.deltaX * scrollFactor,  // Horizontal scroll (from touchpads/mouse)
+        top: event.deltaY * scrollFactor,   // Vertical scroll
+        behavior: "smooth"
+    });
+
+    // Send the scroll event message with both deltaY and deltaX
+    sendMessage("scroll", { deltaY: event.deltaY, deltaX: event.deltaX });
 });
+
 
 document.addEventListener("keydown", (event) => {
     sendMessage("keydown", { key: event.key, code: event.code });
@@ -379,6 +399,22 @@ window.addEventListener("resize", () => {
     clearTimeout(window.resizeTimeout);
     window.resizeTimeout = setTimeout(checkResize, 200); // Debounce to prevent spam
 });
+
+document.addEventListener("keydown", function (event) {
+    if ((event.ctrlKey && event.key === "s") ||  // Block Ctrl+S (Save)
+        (event.ctrlKey && event.key === "p")) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+    if (event.ctrlKey && event.key === "a") {
+        const activeElement = document.activeElement;
+        if (activeElement.tagName !== "CANVAS") {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+    }
+});
+
 
 // Generates a random user ID
 function generateUserId() {
