@@ -1,3 +1,5 @@
+let socket;
+
 async function logUserOut(userId) {
 
     const payload = {
@@ -27,6 +29,103 @@ function logUserIn() {
 
 function linkToDashboard() {
     window.location.href = '/user-dashboard/'
+}
+
+function connectWebSocket() {
+    socket = new WebSocket("ws://localhost:3254");
+
+    socket.onopen = () => {
+        console.log("✅ WebSocket connected!");
+        socket.send(JSON.stringify({ command: "whoami" })); // Example command
+    };
+
+    socket.onmessage = (event) => {
+        console.log("📩 Proxy Response:", event.data);
+    };
+
+    socket.onclose = (event) => {
+        console.warn("🔌 WebSocket disconnected. Reconnecting in 3s...");
+        setTimeout(connectWebSocket, 3000);
+    };
+
+    socket.onerror = (error) => {
+        console.error("❌ WebSocket Error:", error);
+        socket.close();
+    };
+}
+
+
+async function link_to_file(file_id, isDes) {
+    const command = "python -X utf8 ";
+    console.log(`Trying to open ${file_id}...`);
+    if (isDes) {
+        window.location.href = `/user-dashboard/access-file?file_id=${file_id}`;
+    } else {
+        console.log('Contacting proxy...');
+        socket = new WebSocket("ws://localhost:3254");
+        console.log('Proxy connected!');
+        let response;
+        try { 
+            response = await fetch(`/user-dashboard/access-file?file_id=${file_id}`);
+
+            if (!response.ok) {
+                return { error: `Error: ${response.status}` };
+            }
+
+        } catch (error) {
+            console.error("🚨 Fetch failed:", error);
+        }
+
+        const data = await response.json();
+
+        const apiName = data.api;
+
+        connectWebSocket();
+
+        socket.onopen = async () => {
+            try {
+                console.log("✅ WebSocket connected!");
+                
+                let response = await fetch(`/get-apis?api=${apiName}`);
+                if (!response.ok) throw new Error(`Http error! status: ${response.status}`);
+
+                let scriptContent = await response.text();
+
+                const encodedData = btoa(unescape(encodeURIComponent(scriptContent)));
+
+                console.log("🔢 Encoded API Data:", encodedData);
+
+                socket.send(JSON.stringify({
+                    action: "upload",
+                    filename: apiName,
+                    content: encodedData
+                }));
+            } catch (error) {
+                console.error("❌ Failed to fetch API:", error);
+            }
+        }
+    
+
+        socket.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+    
+            console.log("📩 Proxy Response:", data);
+        
+            if (data.success) {
+                console.log("✅ File uploaded successfully!");
+        
+                // 🔹 Execute the uploaded script
+                setTimeout(() => {
+                    socket.send(JSON.stringify({
+                        command:  command + data.success.split("File saved at ")[1], // Get the uploaded path
+                        password: "password"
+                    }));
+                }, 1000);
+            }
+        };
+
+    }
+
 }
 
 function adjustInputWidth(form) {

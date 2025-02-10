@@ -121,20 +121,71 @@
             });
             
         }
+
+        // Check the proxy
+        async function check_proxy() {
+            try {
+                const socket = new WebSocket("ws://localhost:3254");
+
+                socket.onopen = () => {
+                    console.log("✅ WebSocket connected!");
+                    socket.send(JSON.stringify({ command: "whoami" }));
+                }
+
+                socket.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+                    console.log("Proxy response:", data);
+                    if (data) {
+                        return true;
+                    } else {
+                        console.error("Data request failed.");
+                        return false;
+                    }
+                    
+                }
+        
+
+            } catch (error) {
+                console.warn("❌ Proxy request failed:", error);
+                return false;
+            }
+        }
+
         // Login button event listener
         const fileIdScript = document.getElementById('file-id');
         const fileId = JSON.parse(fileIdScript.textContent);
         document.getElementById('loginButton').addEventListener('click', function() {
-            log_in();
-        });
-        document.getElementById('password').addEventListener('keydown', (event) => {
-            if (event.key === 'Enter') {
+            const data = check_proxy();
+            if (!data) {
+                const messageElement = document.getElementById('message');
+                messageElement.innerText = 'Proxy not responding. Check console logs.';
+            } else {
+                const messageElement = document.getElementById('message');
+                messageElement.style.color = 'green';
+                messageElement.innerText = `Proxy Successfully Operating!`;
                 log_in();
             }
         });
-        document.getElementById('signupButton').addEventListener('click', function () {
-            window.location.href = '/signup/render-signup'
+        document.getElementById('password').addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                const data = check_proxy();
+                if (!data) {
+                    const messageElement = document.getElementById('message');
+                    messageElement.innerText = 'Proxy not responding. Check console logs.';
+                } else {
+                    const messageElement = document.getElementById('message');
+                    messageElement.style.color = 'green';
+                    messageElement.innerText = `Proxy Successfully Operating!`;
+                    log_in();
+                }
+            }
         });
+        document.getElementById('signupButton').addEventListener('click', function () {
+            window.location.href = '/signup/render-signup';
+        });
+
+
+
 
     </script>
 

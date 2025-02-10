@@ -1,2 +1,3 @@
 proxies/cookies/
-xlr8-server/instance/
+xlr8-server/instance/test.db
+proxies/node_modules/

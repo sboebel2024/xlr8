@@ -170,6 +170,28 @@
             signupButton.style.backgroundColor = "#007bff";
         };
 
+        signupButton.addEventListener("click", function () {
+            let os = "unknown";
+            let userAgent = navigator.userAgent.toLowerCase();
+
+            if (userAgent.includes("win")) {
+                os = "windows";
+            } else if (userAgent.includes("mac")) {
+                os = "macos";
+            } else if (userAgent.includes("linux")) {
+                os = "linux";
+            }
+
+            let link = document.createElement("a");
+            link.href = `/download-proxy?os=${os}`; // Pass OS as a query param
+            link.setAttribute("download", "localproxy-win.exe"); // Suggested filename
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+
+
+
         form.appendChild(signupButton);
 
         const orgButton = document.createElement("button");
@@ -322,6 +344,7 @@
 
             responseMessage.innerText = "Processing...";
             responseMessage.style.color = "blue";
+
 
             const response = await fetch('/signup/', {
                 method: 'POST',

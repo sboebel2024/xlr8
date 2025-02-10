@@ -1,13 +1,13 @@
 from app import create_app, db
 import config
-from flask import send_from_directory
+from flask import send_from_directory, render_template, request, jsonify, make_response
 from app.models import *
 from flask_socketio import SocketIO, join_room, emit, leave_room
 import threading
 import time
 
 # Create app in the testing configuration
-app = create_app(config.TestingConfig)
+app = create_app(config.DevelopmentConfig)
 
 def update_daily_codes():
     with app.app_context():
@@ -31,6 +31,34 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 @app.route('/favicon.ico')
 def favicon():
     return send_from_directory('static', 'favicon.ico', mimetype='image/vnd.microsoft.icon')
+
+@app.route('/')
+def start():
+    return render_template('user_dashboard.html')
+
+@app.route('/download-proxy')
+def download_proxy():
+    os_type = request.args.get("os", "").lower()
+
+    filenames = {
+        "windows": "localproxy-win.exe",
+        "macos": "localproxy-macos",
+        "linux": "localproxy-linux",
+    }
+
+    filename = filenames.get(os_type)
+
+    if not filename:
+        return "Unsupported OS", 400
+
+    return send_from_directory("static/proxies/", filename, as_attachment=True)
+
+@app.route('/get-apis')
+def get_apis():
+    apiName = request.args.get("api","").lower()
+
+    return send_from_directory(f"static/apis", apiName)
+
 
 # Route that is called when a user starts viewing a file
 @socketio.on('join')

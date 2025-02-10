@@ -55,8 +55,14 @@ function renderHeader(header) {
     const logo = document.createElement('div');
     styleLogo(logo);
     logo.addEventListener('mousedown', () => {
-        editFileContent(fileId, JSON.stringify(calculator.getState()), nameTxt.textContent)
         linkToDashboard();
+        const nameTxt = document.getElementById('NameForm');
+        if (type(nameTxt) === 'input') {
+            editFileContent(fileId, JSON.stringify(calculator.getState()), nameTxt.value)
+        } else {
+            editFileContent(fileId, JSON.stringify(calculator.getState()), nameTxt.textContent)
+        }
+
     });
     header.appendChild(logo);
     

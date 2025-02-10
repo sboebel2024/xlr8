@@ -245,11 +245,12 @@ function renderImage(image, file) {
 }
 
 function renderListItem(listItem, file) {
+    const isDes = (file.ext === ".des") || (file.ext === "des");
     styleListItem(listItem);
 
     listItem.classList.add("file-item");
 
-    listItem.onclick = () => link_to_file(file.id);
+    listItem.onclick = async () => await link_to_file(file.id, isDes);
 
     listItem.addEventListener('mouseenter', () => {
         listItem.style.boxShadow = '4px 4px 10px rgba(0,0,0,0.6)';
@@ -269,7 +270,7 @@ function renderListItem(listItem, file) {
         listItem.onclick = "";
     });
     xButton.addEventListener('mouseleave', () => {
-        listItem.onclick = () => link_to_file(file.id);
+        listItem.onclick = async () => await link_to_file(file.id, isDes);
     });
     listItem.appendChild(image);
     listItem.appendChild(infoContainer);

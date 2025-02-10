@@ -17,12 +17,6 @@ best to comment all of this!
 // Declare State Variables
 const isCards = true;
 
-// Redirect to the file viewer
-function link_to_file(file_id) {
-    console.log(file_id);
-    window.location.href = `/user-dashboard/access-file?file_id=${file_id}`;
-}
-
 // Copy the link to the user's clipboard
 async function copyLink(file_id) {
     const link = `https://xlr8.online/user-dashboard/access-file?file_id=${file_id}`;

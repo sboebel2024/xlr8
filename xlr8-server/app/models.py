@@ -124,6 +124,7 @@ class File(db.Model):
     users = db.relationship('User', secondary=user_file_table, backref='files')
     tempUsers = db.relationship('TempUser', secondary = temp_file_table, backref='files')
     treepath = db.Column(db.JSON, nullable=False, default=lambda: [0])
+    extensor = db.Column(db.String(255), nullable=True)
 
     image = db.Column(db.LargeBinary, nullable=True)
 
@@ -184,3 +185,7 @@ image_lookup_json = {
     "ovlf": "overleaf.png"
 }
 
+api_lookup_json = {
+    "des": "desApi.py",
+    "ovlf": "manage_ovlf.py"
+}

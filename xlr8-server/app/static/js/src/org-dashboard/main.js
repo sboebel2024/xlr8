@@ -16,11 +16,6 @@ const isAdmin = JSON.parse(isAdminScript.textContent);
 // Declare State Variables
 const isCards = true;
 
-// Redirect to the file viewer
-function link_to_file(file_id) {
-    console.log(file_id);
-    window.location.href = `/user-dashboard/access-file?file_id=${file_id}`;
-}
 
 // Copy the link to the user's clipboard
 async function copyLink(file_id) {
@@ -51,7 +46,6 @@ window.addEventListener('pageshow', (event) => {
         
     }
 });
-
 
 document.body.style.margin = '0';
 

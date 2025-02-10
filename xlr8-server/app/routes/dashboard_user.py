@@ -139,7 +139,8 @@ def get_file_data():
                     "id": file.id, 
                     "name": file.fileName, 
                     "owner": f"{file.owning_user.firstName if file.owning_user_id is not None else None}", 
-                    "ownerId": file.owning_user.id,
+                    "ownerId": file.owning_user_id,
+                    "ext": file.ext,
                     "image": base64.b64encode(file.image).decode('utf-8') if file.image else None,
                     "org": (file.org.orgName) if (file.org) else None,
                     "isPublic": file.isVisible
@@ -209,39 +210,52 @@ def access_file():
 
 
     if file.ext in ext_lookup_json:
-        template_to_run = ext_lookup_json[file.ext]
-        content=file.content
-        print(content)
-        fileName = file.fileName.split('.')[0]
+        orgName = None
+        if (file.ext == "des"):
+            template_to_run = ext_lookup_json[file.ext]
+            content=file.content
+            print(content)
+            fileName = file.fileName.split('.')[0]
 
-        print(template_to_run)
+            print(template_to_run)
 
-        
-        isOwningUser = 1
-        if (file.owning_user_id is not None):
-            isOwningUser = 0
-            if (user_id == file.owning_user_id):
-                isOwningUser = 1
-            else:
+            
+            isOwningUser = 1
+            if (file.owning_user_id is not None):
                 isOwningUser = 0
+                if (user_id == file.owning_user_id):
+                    isOwningUser = 1
+                else:
+                    isOwningUser = 0
 
-        print(f"File ID: {file_id}")
+            print(f"File ID: {file_id}")
 
-        if user:
-            org = Org.query.get(user.currentOrgId)
-            orgName = org.orgName
+            if user:
+                org = Org.query.get(user.currentOrgId)
+                if org:
+                    orgName = org.orgName
 
+            else:
+                orgName = 'None'
+
+            print(f'OUID: {file.owning_user_id}')
+
+            ouid = file.owning_user_id
+
+            print(ouid)
+
+            return render_template(template_to_run, content=content, file_id=file_id, filename=fileName, isOwningUser=isOwningUser, userFname=userFname, userid = pan_userid, orgName=orgName, owningUserId=ouid)
+        
         else:
-            orgName = 'None'
+            api = api_lookup_json[file.ext]
+            extensor = file.extensor
+            content = file.content
 
-        print(f'OUID: {file.owning_user_id}')
+            return jsonify({"status":"OK", "api": api, "extensor": extensor, "content": content}), 200
+            
 
-        ouid = file.owning_user_id
+    
 
-        print(ouid)
-
-
-        return render_template(template_to_run, content=content, file_id=file_id, filename=fileName, isOwningUser=isOwningUser, userFname=userFname, userid = pan_userid, orgName=orgName, owningUserId=ouid)
 
     return jsonify({
         "status": "NOK", 
@@ -378,10 +392,6 @@ def create_file():
         content = data.get('content', None)
         ext = data.get('type')
 
-        print(f'Org: {org.orgName}')
-        print(f'Ext: {ext}')
-
-        
         # return({"data":f"fileName: {file_name}, ext: {ext}, content: {content}, owning_user_id: {user_id}"})
         
         file = File(fileName=file_name, ext=ext, content=content)
@@ -393,7 +403,6 @@ def create_file():
             file.image = image
 
         Id = None
-        print(f'User: {user.id}')
 
         if user:
             print('Executing:')
