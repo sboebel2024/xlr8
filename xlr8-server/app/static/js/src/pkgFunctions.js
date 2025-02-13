@@ -50,20 +50,24 @@ function connectWebSocket() {
 
     socket.onerror = (error) => {
         console.error("❌ WebSocket Error:", error);
+        alert('You have not started the xlr8 executable. Please open it and start it!')
         socket.close();
     };
 }
 
+function base64Encode(str) {
+    return btoa(unescape(encodeURIComponent(str)));
+}
 
 async function link_to_file(file_id, isDes) {
-    const command = "python -X utf8 ";
+    const fileId = file_id
     console.log(`Trying to open ${file_id}...`);
     if (isDes) {
         window.location.href = `/user-dashboard/access-file?file_id=${file_id}`;
     } else {
         console.log('Contacting proxy...');
         socket = new WebSocket("ws://localhost:3254");
-        console.log('Proxy connected!');
+        
         let response;
         try { 
             response = await fetch(`/user-dashboard/access-file?file_id=${file_id}`);
@@ -78,54 +82,67 @@ async function link_to_file(file_id, isDes) {
 
         const data = await response.json();
 
-        const apiName = data.api;
+        const extension = data.ext;
 
         connectWebSocket();
 
         socket.onopen = async () => {
-            try {
-                console.log("✅ WebSocket connected!");
-                
-                let response = await fetch(`/get-apis?api=${apiName}`);
-                if (!response.ok) throw new Error(`Http error! status: ${response.status}`);
-
-                let scriptContent = await response.text();
-
-                const encodedData = btoa(unescape(encodeURIComponent(scriptContent)));
-
-                console.log("🔢 Encoded API Data:", encodedData);
-
-                socket.send(JSON.stringify({
-                    action: "upload",
-                    filename: apiName,
-                    content: encodedData
-                }));
-            } catch (error) {
-                console.error("❌ Failed to fetch API:", error);
-            }
+            // Open API
+            console.log(`Extension: ${extension}`);
+            loadCommandScript(extension, () => {
+                if (window.commands && window.commands[extension]) {
+                    console.log(`🚀 Running command for ${extension}:`, window.commands[extension].openFile(userId, fileId, socket));
+        
+                    // ✅ Start monitoring the Chrome tab after launching Overleaf
+                    if (extension === "ovlf") {
+                        setTimeout(() => {
+                            window.commands["ovlf"].watchOverleafTab(fileId, socket);
+                        }, 5000); // Delay to allow the browser to open first
+                    }
+                } else {
+                    console.error(`❌ No command available for ${extension}`);
+                }
+            });
         }
-    
-
-        socket.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-    
-            console.log("📩 Proxy Response:", data);
-        
-            if (data.success) {
-                console.log("✅ File uploaded successfully!");
-        
-                // 🔹 Execute the uploaded script
-                setTimeout(() => {
-                    socket.send(JSON.stringify({
-                        command:  command + data.success.split("File saved at ")[1], // Get the uploaded path
-                        password: "password"
-                    }));
-                }, 1000);
-            }
-        };
-
     }
 
+}
+
+function loadCommandScript(extension, callback) {
+    fetch("/static/apis/api_lookup.json")
+        .then(response => response.json())
+        .then(extensionMap => {
+            const scriptPath = extensionMap[extension];
+
+            console.log(`🔍 Script path from JSON: ${scriptPath}`);  // Debugging step
+
+            if (!scriptPath) {
+                console.error(`❌ No command script found for extension: ${extension}`);
+                return;
+            }
+
+            const fullPath = `/static/apis/${scriptPath}`; 
+
+            console.log(`✅ Full script path: ${fullPath}`); 
+
+            // Check if script is already loaded
+            if (document.querySelector(`script[src="/static/apis/${scriptPath}"]`)) {
+                console.log(`✅ Command script already loaded: ${scriptPath}`);
+                callback();
+                return;
+            }
+
+            // Load the script dynamically
+            const scriptTag = document.createElement("script");
+            scriptTag.src = fullPath;  // 🚀 Ensure correct path is used
+            scriptTag.async = false;
+            scriptTag.onload = () => {
+                console.log(`✅ Successfully loaded: ${fullPath}`);
+                callback();
+            };
+            document.head.appendChild(scriptTag);
+        })
+        .catch(error => console.error("❌ Failed to load extension mapping:", error));
 }
 
 function adjustInputWidth(form) {

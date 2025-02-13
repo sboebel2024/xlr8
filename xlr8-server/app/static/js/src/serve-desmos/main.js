@@ -140,7 +140,7 @@ function emitStateUpdate() {
 
     if (currentStateString !== lastEmittedState) {
         lastEmittedState = currentStateString; // Update last emitted state
-        socket.emit("state_update", {
+        socket2.emit("state_update", {
             file_id: fileId,
             user_id: `User${userId}`,
             state: currentState,
@@ -200,12 +200,12 @@ renderHeader(header);
 // });
 
 // Initialize the WebSocket
-const socket = io('https://xlr8.online');
+const socket2 = io('https://xlr8.online');
 console.log(`User ID: ${userId}, File ID: ${fileId}`);
-socket.emit('join', { file_id: fileId, user_id: `User${userId}` });
+socket2.emit('join', { file_id: fileId, user_id: `User${userId}` });
 
 // WebSocket Receiver
-socket.on('state_update', (data) => {
+socket2.on('state_update', (data) => {
     console.log('Received state update:', data);
 
     if (data.user_id === `User${userId}`) {

@@ -47,7 +47,7 @@ user_file_table = db.Table(
     'user_file',
     db.Column('user_id', String(36), db.ForeignKey('users.id', ondelete='CASCADE'), primary_key=True),
     db.Column('file_id', String(36), db.ForeignKey('files.id', ondelete='CASCADE'), primary_key=True),
-    db.Column('local_path', db.String(255))
+    db.Column('user_profile', db.Text, nullable=True)
 )
 temp_file_table = db.Table(
     'temp_file',
@@ -186,6 +186,7 @@ image_lookup_json = {
 }
 
 api_lookup_json = {
-    "des": "desApi.py",
-    "ovlf": "manage_ovlf.py"
+    "des": "overleaf.js",
+    "ovlf": "solidworks.js",
+    "txt": "vscode.js"
 }

@@ -247,11 +247,11 @@ def access_file():
             return render_template(template_to_run, content=content, file_id=file_id, filename=fileName, isOwningUser=isOwningUser, userFname=userFname, userid = pan_userid, orgName=orgName, owningUserId=ouid)
         
         else:
-            api = api_lookup_json[file.ext]
+            ext = file.ext
             extensor = file.extensor
             content = file.content
 
-            return jsonify({"status":"OK", "api": api, "extensor": extensor, "content": content}), 200
+            return jsonify({"status":"OK", "ext": ext, "extensor": extensor, "content": content}), 200
             
 
     
@@ -343,6 +343,10 @@ def edit_file():
         }
     }), 200
 
+def split_filename(filename):
+    parts = filename.rsplit('.', 1)  # Split at the last dot
+    return (parts[0], parts[1]) if len(parts) > 1 else (filename, '')
+
 
 @user_dashboard_bp.route('/create-file', methods=['POST'])
 def create_file():
@@ -391,6 +395,11 @@ def create_file():
         image = data.get('image', None)
         content = data.get('content', None)
         ext = data.get('type')
+        if not content:
+            content = ""
+
+        if not ext:
+            name, ext = split_filename(file_name)
 
         # return({"data":f"fileName: {file_name}, ext: {ext}, content: {content}, owning_user_id: {user_id}"})
         

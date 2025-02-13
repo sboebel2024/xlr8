@@ -17,6 +17,7 @@ def create_app(config_class='config.Config'):
     from app.routes.logout_routes import logout_bp
     from app.routes.dashboard_user import user_dashboard_bp
     from app.routes.org_dashboard import org_dashboard_bp
+    from app.routes.api_routes import api_routes_bp
     # etc
 
     app.register_blueprint(login_bp, url_prefix='/login')
@@ -24,7 +25,8 @@ def create_app(config_class='config.Config'):
     app.register_blueprint(logout_bp, url_prefix='/logout')
     app.register_blueprint(user_dashboard_bp, url_prefix='/user-dashboard')
     app.register_blueprint(org_dashboard_bp, url_prefix='/org-dashboard')
-    # etc
+    app.register_blueprint(api_routes_bp, url_prefix='/api-routes/')
+
 
     return app
 

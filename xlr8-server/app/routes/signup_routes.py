@@ -108,7 +108,7 @@ def join_org():
     data = request.get_json()
     org_name = data.get('orgName')
     if not org_name:
-        return jsonify({"status": "NOK", "message": "Organization name is required"}), 400
+        return jsonify({"status": "NOK", "message": "Organization content is required"}), 400
 
     org = Org.query.filter_by(orgName=org_name).first()
     if not org:
@@ -183,6 +183,3 @@ def signup():
 
     return jsonify({"status": "NOK", "message": "Something went wrong."}), 400
     
-
-
-
